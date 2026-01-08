@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8" />
+  <title>Shift White Gold - Home</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    html,
+    body {
+      height: 100%;
+      margin: 0;
+      font-family: Arial;
+      background: #f7f7f7
+    }
+
+    body {
+      background-image: url('whitegold.png');
+      background-size: cover;
+      background-position: center center;
+      background-repeat: no-repeat;
+      background-attachment: fixed;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .main-scroll {
+      flex: 1;
+      overflow-y: auto;
+    }
+
+    .topbar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 18px;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06)
+    }
+
+    .brand {
+      font-weight: 800;
+      color: #2b652e
+    }
+
+    .controls {
+      display: flex;
+      gap: 8px;
+      align-items: center
+    }
+
+    .controls button {
+      background: #2b652e;
+      color: #fff;
+      border: none;
+      padding: 8px 12px;
+      border-radius: 8px;
+      cursor: pointer
+    }
+
+    .filters button {
+      background: #eee;
+      color: #222;
+      padding: 8px 10px;
+      border-radius: 8px;
+      border: none;
+      cursor: pointer
+    }
+
+    .container {
+      display: block;
+      overflow: visible;
+      margin: 0;
+      padding: 0
+    }
+
+    .inner {
+      display: block;
+      max-width: 1400px;
+      width: 100%;
+      margin: 0 auto;
+      padding: 0;
+      box-sizing: border-box;
+      background: transparent
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 36px 26px;
+      align-items: start;
+      align-content: start;
+      padding: 36px 30px 120px 30px
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.9);
+      border: 1px solid #e3e3e3;
+      border-radius: 16px;
+      padding: 18px;
+      box-shadow: 0 4px 18px rgba(0, 0, 0, 0.08);
+      display: flex;
+      gap: 14px;
+      align-items: flex-start;
+      overflow: hidden;
+    }
+
+    .card img {
+      width: 96px;
+      height: 96px;
+      border-radius: 8px;
+      object-fit: cover;
+      background: #f0f0f0
+    }
+
+    .meta h3 {
+      margin: 0;
+      font-size: 1.05rem;
+      color: #222
+    }
+
+    .meta .type {
+      color: #2b652e;
+      font-weight: 700;
+      margin-top: 6px
+    }
+
+    .meta .price {
+      color: #666;
+      margin-top: 6px
+    }
+
+    .meta .addr {
+      color: #444;
+      margin-top: 6px;
+      font-size: 0.95rem
+    }
+
+    .meta .contact {
+      color: #333;
+      margin-top: 6px
+    }
+
+    .meta .email {
+      color: #666;
+      margin-top: 4px;
+      font-size: 0.95rem
+    }
+
+    .no-data {
+      text-align: center;
+      padding: 28px;
+      color: #666
+    }
+
+    .modal-back {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 60
+    }
+
+    .modal {
+      background: #fff;
+      border-radius: 16px;
+      padding: 18px;
+      max-width: 560px;
+      width: 94%;
+      box-shadow: 0 18px 60px rgba(0, 0, 0, 0.18);
+      max-height: 86vh;
+      overflow-y: auto;
+      animation: modalIn 220ms ease-out
+    }
+
+    .modal h3 {
+      margin: 0 0 10px 0;
+      color: #1f1f1f;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 1.25rem
+    }
+
+    .profile-hero {
+      display: flex;
+      gap: 14px;
+      align-items: center;
+      margin-bottom: 6px
+    }
+
+    .profile-avatar {
+      width: 72px;
+      height: 72px;
+      border-radius: 14px;
+      object-fit: cover;
+      background: #f2f2f2;
+      box-shadow: 0 8px 22px rgba(0, 0, 0, 0.06)
+    }
+
+    .profile-meta {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 6px
+    }
+
+    .pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #e8f5e9;
+      color: #1b5e20;
+      border-radius: 999px;
+      padding: 6px 10px;
+      font-weight: 700;
+      font-size: 0.88rem
+    }
+
+    .price-tag {
+      font-weight: 800;
+      font-size: 1.1rem;
+      color: #2b652e
+    }
+
+    .contact-row {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      font-size: 0.95rem;
+      color: #333
+    }
+
+    .contact-row span {
+      background: #f5f7f9;
+      padding: 6px 10px;
+      border-radius: 10px
+    }
+
+    .divider {
+      height: 1px;
+      background: #eee;
+      margin: 10px 0
+    }
+
+    .row label {
+      font-weight: 600;
+      color: #333
+    }
+
+    .btn-row button {
+      min-width: 110px
+    }
+
+    @keyframes modalIn {
+      from {
+        transform: translateY(12px);
+        opacity: 0
+      }
+
+      to {
+        transform: translateY(0);
+        opacity: 1
+      }
+    }
+
+    .row {
+      margin-top: 8px
+    }
+
+    .btn-row {
+      display: flex;
+      gap: 8px;
+      justify-content: flex-end;
+      margin-top: 14px
+    }
+
+    .link {
+      background: #eee;
+      border: none;
+      padding: 8px 10px;
+      border-radius: 8px;
+      cursor: pointer
+    }
+
+    /* intro overlay */
+    .intro-overlay {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      z-index: 9999;
+      flex-direction: column
+    }
+
+    .intro-text {
+      font-family: Arial, Helvetica, sans-serif;
+      font-weight: 900;
+      color: #2b652e;
+      font-size: 2.2rem;
+      letter-spacing: 2px;
+      opacity: 0;
+      transform: scale(0.95);
+      animation: introIn 900ms ease-out forwards
+    }
+
+    @keyframes introIn {
+      0% {
+        opacity: 0;
+        transform: scale(0.95)
+      }
+
+      50% {
+        opacity: 1;
+        transform: scale(1.02)
+      }
+
+      100% {
+        opacity: 1;
+        transform: scale(1)
+      }
+    }
+
+    .intro-hide {
+      transition: opacity 450ms ease, transform 450ms ease;
+      opacity: 0;
+      transform: scale(0.98)
+    }
+
+    @media(max-width:640px) {
+      .grid {
+        grid-template-columns: 1fr
+      }
+
+      .controls {
+        flex-wrap: wrap
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div id="introOverlay" class="intro-overlay" aria-hidden="true">
+    <div class="intro-text">WELCOME TO SHIFT WHITE GOLD</div>
+  </div>
+  <div class="topbar">
+    <div style="display:flex;align-items:center;gap:12px">
+      <div class="brand">Shift White Gold</div>
+      <!-- Prominent register CTA for visiting milk sellers -->
+      <button id="registerCTA"
+        style="background:#ff6b00;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer;font-weight:700">Register</button>
+    </div>
+    <div class="controls">
+      <div class="filters">
+        <button id="allBtn" class="link">All</button>
+        <button id="cowBtn" class="link">Cow Milk</button>
+        <button id="buffaloBtn" class="link">Buffalo Milk</button>
+      </div>
+      <button onclick="location.href='orders.html'" class="link" style="background:#2196f3;color:#fff">📋 My
+        Orders</button>
+      <button onclick="location.href='tracking.html'" class="link" style="background:#ff9f1c;color:#fff">📦 Track
+        Order</button>
+      <button onclick="location.href='cart.html'" class="link">Cart</button>
+      <div id="accountArea">
+        <button id="registerBtnTop" onclick="location.href='register.html'">Register</button>
+        <button id="registerSellerTop" onclick="location.href='register.html?role=seller'" class="link">Register as
+          Seller</button>
+        <button id="loginBtnTop" onclick="location.href='login.html'" class="link">Login</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="main-scroll">
+    <div class="container">
+      <div class="inner">
+        <div id="sellerBanner"
+          style="display:none;align-items:center;justify-content:space-between;gap:12px;background:#e8f5e9;border:1px solid #c8e6c9;border-radius:10px;padding:12px;margin-bottom:12px;position:sticky;top:0;z-index:10">
+          <div style="color:#1b5e20;font-weight:700">Are you a Milk Seller? Register your profile and start receiving
+            orders.</div>
+          <div>
+            <button id="openSellerReg"
+              style="background:#2b652e;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer">Register
+              as Seller</button>
+          </div>
+        </div>
+        <h2 id="listTitle" style="display:none">Milk Sellers</h2>
+        <div id="grid" class="grid"></div>
+        <div id="noData" class="no-data" style="display:none">No sellers available. Sellers can register using the
+          Register button.</div>
+      </div>
+    </div>
+  </div>
+
+  <div id="modalBack" class="modal-back" role="dialog" aria-modal="true">
+    <div class="modal" id="modal">
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    function getUsers() { return JSON.parse(localStorage.getItem('users') || '[]'); }
+    function saveUsers(list) { localStorage.setItem('users', JSON.stringify(list)); }
+
+    function showEditProfileModal() {
+      const modalBack=document.getElementById('modalBack');
+      const content=document.getElementById('modalContent');
+      const current=JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+      if( !current) {
+        showLoginModal(()=>renderAccountArea());
+        return;
+      }
+
+      content.innerHTML=` <h3 style="margin-top:0">Edit Profile</h3><div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"><input id="editFname" placeholder="First name" value="${current.fname || ''}"><input id="editLname" placeholder="Last name" value="${current.lname || ''}"></div><div class="row"><input id="editEmail" type="email" placeholder="Email" value="${current.email || ''}"></div><div class="row"><input id="editAddress" placeholder="Address" value="${current.address || ''}"></div><div class="btn-row"><button id="saveProfile" style="background:#2b652e;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer">Save</button><button id="closeEditProfile" class="link">Close</button></div>`;
+      modalBack.style.display='flex';
+
+      document.getElementById('closeEditProfile').onclick=()=> {
+        modalBack.style.display='none';
+      }
+
+      ;
+
+      document.getElementById('saveProfile').onclick=async ()=> {
+        const updated= {
+          fname: (document.getElementById('editFname').value || '').trim(),
+            lname: (document.getElementById('editLname').value || '').trim(),
+            email: (document.getElementById('editEmail').value || '').trim(),
+            address: (document.getElementById('editAddress').value || '').trim()
+        }
+
+        ;
+
+        const token=getToken();
+
+        let merged=Object.assign({}
+
+        , current, updated);
+
+      if(token) {
+        try {
+          const saved=await apiFetch('/me', {
+            method:'PUT', headers: {
+              'Content-Type':'application/json', 'Authorization':'Bearer ' +token
+            }
+
+            , body: JSON.stringify(updated)
+          });
+
+        merged=Object.assign({}
+
+        , merged, saved);
+    }
+
+    catch(e) {
+      /* fallback to local update */
+    }
+    }
+
+    // local persistence
+    localStorage.setItem('currentUser', JSON.stringify(merged));
+    const users=getUsers();
+    const idx=users.findIndex(u=> (u._id && merged._id && u._id===merged._id) || (u.phone && merged.phone && u.phone===merged.phone));
+
+    if(idx >=0) {
+      users[idx]=Object.assign({}
+
+      , users[idx], merged);
+    saveUsers(users);
+    }
+
+    modalBack.style.display='none';
+    renderAccountArea();
+    alert('Profile updated');
+    }
+
+    ;
+    }
+
+    // API helper and account area: render login/register or account menu with Sign Out
+    const API_BASE = 'http://localhost:4000/api';
+    async function apiFetch(path, opts) {
+      try { const res = await fetch(API_BASE + path, opts); if (!res.ok) throw new Error('Network error'); return await res.json(); } catch (e) { throw e; }
+    }
+
+    function getToken() { const cur = JSON.parse(localStorage.getItem('currentUser') || 'null'); return cur && cur.token ? cur.token : null; }
+    function uid() { return 'u' + Date.now() + Math.floor(Math.random() * 1000); }
+
+    // Show an in-page login modal. onSuccess(user, token) is called after successful login.
+    function showLoginModal(onSuccess) {
+      const modalBack = document.getElementById('modalBack');
+      const content = document.getElementById('modalContent');
+      modalBack.style.display = 'flex';
+      content.innerHTML = `
+        <h3>Login to continue</h3>
+        <div class="row"><input id="modalPhone" placeholder="Mobile number (+91xxxxxxxxxx)"></div>
+        <div class="row"><input id="modalPassword" type="password" placeholder="Password"></div>
+        <div class="row"><button id="modalLoginBtn" style="background:#2b652e;color:#fff;border:none;padding:8px 10px;border-radius:8px;cursor:pointer">Login</button></div>
+        <div class="row" style="text-align:center;color:#666">New user? <button id="modalRegisterBtn" class="link">Register</button></div>
+        <div class="btn-row"><button id="modalClose" class="link">Close</button></div>
+      `;
+      document.getElementById('modalClose').onclick = () => { modalBack.style.display = 'none'; };
+      document.getElementById('modalRegisterBtn').onclick = () => { modalBack.style.display = 'none'; window.location.href = 'register.html?redirect=index.html'; };
+
+      document.getElementById('modalLoginBtn').onclick = async () => {
+        const phone = (document.getElementById('modalPhone').value || '').trim();
+        const pass = (document.getElementById('modalPassword').value || '');
+        if (!phone || !pass) { alert('Enter phone and password'); return; }
+        // Try server login
+        try {
+          const result = await apiFetch('/login', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ phone, password: pass }) });
+          const token = result.token;
+          const user = result.user;
+          localStorage.setItem('currentUser', JSON.stringify(Object.assign({}, user, { token })));
+          modalBack.style.display = 'none';
+          if (onSuccess) onSuccess(user, token);
+          return;
+        } catch (err) {
+          // fallback to localStorage login
+          const users = JSON.parse(localStorage.getItem('users') || '[]');
+          const user = users.find(u => u.phone === phone);
+          if (!user) { alert('User not found'); return; }
+          if (user.password !== pass) { alert('Incorrect password'); return; }
+          const stored = { phone: user.phone, role: user.role, fname: user.fname, _id: user._id };
+          localStorage.setItem('currentUser', JSON.stringify(stored));
+          modalBack.style.display = 'none';
+          if (onSuccess) onSuccess(stored, null);
+          return;
+        }
+      };
+    }
+
+    // Account area: render login/register or account menu with Sign Out
+    function renderAccountArea() {
+      const area = document.getElementById('accountArea');
+      const current = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (!area) return;
+      if (current) {
+        const name = (current.fname || '') + (current.lname ? ' ' + current.lname : '');
+        const firstLetter = (name || 'A').trim().charAt(0).toUpperCase() || 'A';
+        area.innerHTML = `
+          <div style="display:flex;align-items:center;gap:8px">
+            <div style="position:relative">
+              <button id="acctBtn" aria-label="Account menu" style="background:none;border:none;cursor:pointer;padding:0">
+                <div style="width:36px;height:36px;border-radius:50%;background:#2b652e;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:800;font-size:0.95rem;box-shadow:0 6px 16px rgba(0,0,0,0.12)">${firstLetter}</div>
+              </button>
+              <div id="acctMenu" style="position:absolute;right:0;top:40px;min-width:180px;background:#fff;border-radius:10px;box-shadow:0 12px 28px rgba(0,0,0,0.14);display:none;overflow:hidden;z-index:2000">
+                <button id="editProfileMenu" style="width:100%;padding:10px;border:none;background:none;text-align:left;cursor:pointer">Edit name / address</button>
+                <button id="myAccount" style="width:100%;padding:10px;border:none;background:none;text-align:left;cursor:pointer">My Account</button>
+                <button id="signOutMenu" style="width:100%;padding:10px;border:none;background:none;text-align:left;color:#c62828;font-weight:700;cursor:pointer">Sign Out</button>
+              </div>
+            </div>
+          </div>`;
+        const acctBtn = document.getElementById('acctBtn');
+        const acctMenu = document.getElementById('acctMenu');
+        acctBtn.addEventListener('click', (e) => { e.stopPropagation(); acctMenu.style.display = acctMenu.style.display === 'block' ? 'none' : 'block'; });
+        acctMenu.addEventListener('click', (e) => { e.stopPropagation(); });
+        document.addEventListener('click', () => { if (acctMenu) acctMenu.style.display = 'none'; });
+        document.getElementById('signOutMenu').addEventListener('click', () => { localStorage.removeItem('currentUser'); window.location.href = 'login.html'; });
+        document.getElementById('myAccount').addEventListener('click', () => { acctMenu.style.display = 'none'; if (current.role === 'seller') window.location.href = 'dashboard.html'; else window.location.href = 'index.html'; });
+        document.getElementById('editProfileMenu').addEventListener('click', () => { acctMenu.style.display = 'none'; showEditProfileModal(); });
+      } else {
+        area.innerHTML = `<button id="registerBtnTop" class="link">Register</button><button id="registerSellerTop" class="link">Register as Seller</button><button id="loginBtnTop" class="link">Login</button>`;
+        // attach modal triggers
+        const regBtn = document.getElementById('registerBtnTop');
+        const regSellerBtn = document.getElementById('registerSellerTop');
+        const loginBtn = document.getElementById('loginBtnTop');
+        if (regBtn) regBtn.addEventListener('click', () => showClientRegisterModal());
+        if (regSellerBtn) regSellerBtn.addEventListener('click', () => showSellerRegisterModal());
+        if (loginBtn) loginBtn.addEventListener('click', () => showLoginModal(() => { /* no-op */ }));
+      }
+    }
+    // General client registration modal (optional for customers)
+    function showClientRegisterModal() {
+      const modalBack = document.getElementById('modalBack');
+      const content = document.getElementById('modalContent');
+      const current = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (current && current.role === 'client') { alert('Already logged in as client.'); return; }
+      modalBack.style.display = 'flex';
+      content.innerHTML = `
+        <h3 style="margin-top:0">Create Customer Account</h3>
+        <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <input id="cFname" placeholder="First name">
+          <input id="cLname" placeholder="Last name">
+        </div>
+        <div class="row"><input id="cPhone" placeholder="Mobile number (+91xxxxxxxxxx)"></div>
+        <div class="row"><input id="cEmail" type="email" placeholder="Email"></div>
+        <div class="row"><input id="cPassword" type="password" placeholder="Password"></div>
+        <div class="btn-row">
+          <button id="submitClientReg" style="background:#2b652e;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer">Create Account</button>
+          <button id="closeClientReg" class="link">Close</button>
+        </div>
+      `;
+      document.getElementById('closeClientReg').onclick = () => { modalBack.style.display = 'none'; };
+      document.getElementById('submitClientReg').onclick = async () => {
+        const fname = (document.getElementById('cFname').value || '').trim();
+        const lname = (document.getElementById('cLname').value || '').trim();
+        const phone = (document.getElementById('cPhone').value || '').trim();
+        const email = (document.getElementById('cEmail').value || '').trim();
+        const password = (document.getElementById('cPassword').value || '');
+        if (!fname || !lname || !phone || !email || !password) { alert('Fill all required fields'); return; }
+        const payload = { role: 'client', fname, lname, phone, email, password };
+        // duplication check local side
+        const existing = JSON.parse(localStorage.getItem('users') || '[]');
+        if (existing.some(u => u.phone === phone)) { alert('Phone already registered'); return; }
+        try {
+          const result = await apiFetch('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const token = result.token; const user = result.user;
+          localStorage.setItem('currentUser', JSON.stringify(Object.assign({}, user, { token })));
+          const localUsers = JSON.parse(localStorage.getItem('users') || '[]'); localUsers.push(user); localStorage.setItem('users', JSON.stringify(localUsers));
+          modalBack.style.display = 'none';
+          // Stay on index so client can browse sellers
+          renderAccountArea();
+          alert('Customer account created. You can now order milk.');
+        } catch (e) {
+          const user = Object.assign({ _id: uid() }, payload);
+          const ulist = JSON.parse(localStorage.getItem('users') || '[]'); ulist.push(user); localStorage.setItem('users', JSON.stringify(ulist));
+          localStorage.setItem('currentUser', JSON.stringify({ phone: user.phone, role: user.role, fname: user.fname, _id: user._id }));
+          modalBack.style.display = 'none';
+          renderAccountArea();
+          alert('Customer account created (offline). You can now order milk.');
+        }
+      };
+    }
+
+
+    const sampleSellers = [
+      { _id: 's1', role: 'seller', fname: 'John', lname: 'Doe', phone: '+911234567890', email: 'john@example.com', milkType: 'cow', milkCost: 50, address: 'Local farm, Sector 5', photo: '' },
+      { _id: 's2', role: 'seller', fname: 'Jane', lname: 'Smith', phone: '+919876543210', email: 'jane@example.com', milkType: 'buffalo', milkCost: 70, address: 'Village road', photo: '' }
+    ];
+
+    function dedupeUsers(users) {
+      const seen = new Map();
+      users.forEach(u => {
+        const key = u._id || u.phone || (u.email || '').toLowerCase() || (u.fname + '|' + u.lname);
+        if (!seen.has(key)) seen.set(key, u);
+      });
+      return Array.from(seen.values());
+    }
+
+    function ensureSamplesOnce() {
+      const users = getUsers();
+      if (!users || users.length === 0) {
+        saveUsers(sampleSellers.slice());
+        return;
+      }
+      const existingIds = new Set(users.map(u => u._id));
+      const toAdd = sampleSellers.filter(s => !existingIds.has(s._id));
+      if (toAdd.length) {
+        const merged = users.concat(toAdd);
+        saveUsers(dedupeUsers(merged));
+      } else {
+        // Clean duplicates if any
+        const cleaned = dedupeUsers(users);
+        if (cleaned.length !== users.length) saveUsers(cleaned);
+      }
+    }
+
+    async function render(filter) {
+      // server-first: try to load sellers from backend, fallback to localStorage samples
+      let sellers = [];
+      try {
+        const res = await fetch(API_BASE + '/sellers');
+        if (res.ok) {
+          sellers = await res.json();
+          try {
+            // Merge server sellers into localStorage users for offline visibility
+            const local = getUsers();
+            const existingIds = new Set(local.map(u => u._id));
+            const toAdd = (sellers || []).filter(s => s && !existingIds.has(s._id));
+            if (toAdd.length) {
+              const merged = local.concat(toAdd);
+              saveUsers(dedupeUsers(merged));
+            }
+          } catch (e) { /* ignore local merge errors */ }
+        }
+      } catch (e) { /* ignore and fallback */ }
+      if (!sellers || !sellers.length) { ensureSamplesOnce(); sellers = getUsers().filter(u => u.role === 'seller'); }
+      const list = filter ? sellers.filter(s => s.milkType === filter) : sellers;
+      const grid = document.getElementById('grid');
+      grid.innerHTML = '';
+      if (!list || list.length === 0) {
+        document.getElementById('noData').style.display = 'block';
+        return;
+      }
+      document.getElementById('noData').style.display = 'none';
+      list.forEach(s => {
+        const card = document.createElement('div');
+        card.className = 'card';
+        const photo = s.photo || 'https://cdn-icons-png.flaticon.com/512/616/616408.png';
+        const name = (s.fname || '') + (s.lname ? ' ' + s.lname : '');
+        const typeText = s.milkType === 'cow' ? 'Cow Milk' : 'Buffalo Milk';
+        const priceText = s.milkCost ? ('₹' + s.milkCost + ' / liter') : 'Price not set';
+        card.innerHTML = `
+          <img src="${photo}" alt="photo">
+          <div class="meta">
+            <h3>${name}</h3>
+            <div class="type">${typeText}</div>
+            <div class="price">${priceText}</div>
+            <div class="addr">${s.address || ''}</div>
+            <div class="contact"><strong>Mobile:</strong> ${s.phone || 'N/A'}</div>
+            <div class="email">${s.email || 'N/A'}</div>
+            <div style="margin-top:8px">
+              <label style="font-size:0.95rem">Liters: <input type="number" min="1" value="1" class="quickLiters" style="width:64px;padding:6px;border:1px solid #ddd;border-radius:6px"></label>
+              <button class="quickAdd" style="margin-left:8px;background:#2b652e;color:#fff;border:none;padding:6px 10px;border-radius:8px;cursor:pointer">Add to cart</button>
+            </div>
+          </div>
+        `;
+        card.addEventListener('click', () => openProfile(s._id));
+        // quick add to cart from card
+        const quickBtn = card.querySelector('.quickAdd');
+        const quickInput = card.querySelector('.quickLiters');
+        if (quickBtn) {
+          quickBtn.addEventListener('click', async (ev) => {
+            ev.stopPropagation();
+            const liters = Number(quickInput.value) || 0;
+            if (liters <= 0) { alert('Enter valid liters'); return; }
+            const current = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            const token = getToken();
+            if (current && current.role === 'client' && token) {
+              try {
+                await apiFetch('/cart', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ sellerId: s._id, liters, milkCost: s.milkCost || 0 }) });
+                alert('Added to cart (server). You can review your cart page.');
+                window.dispatchEvent(new Event('storage'));
+                return;
+              } catch (e) { /* fallback to local */ }
+            }
+            const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+            const item = { sellerId: s._id, sellerName: name, milkCost: s.milkCost || 0, liters };
+            cart.push(item);
+            localStorage.setItem('cart', JSON.stringify(cart));
+            if (!current || current.role !== 'client') alert('Added to cart locally. Log in as a client to place orders.'); else alert('Added to cart locally.');
+            try { window.dispatchEvent(new Event('storage')); } catch (e) { }
+          });
+        }
+        grid.appendChild(card);
+      });
+    }
+
+    function openProfile(id) {
+      const users = getUsers();
+      const s = users.find(u => u._id === id);
+      if (!s) return;
+      const modalBack = document.getElementById('modalBack');
+      const content = document.getElementById('modalContent');
+      const name = (s.fname || '') + (s.lname ? ' ' + s.lname : '');
+      const milkTypeLabel = s.milkType === 'cow' ? 'Cow Milk' : 'Buffalo Milk';
+      const photo = s.photo || 'https://cdn-icons-png.flaticon.com/512/616/616408.png';
+      content.innerHTML = `
+        <div class="profile-hero">
+          <img class="profile-avatar" src="${photo}" alt="${name}">
+          <div class="profile-meta">
+            <h3>${name} <span class="pill">${milkTypeLabel}</span></h3>
+            <div class="price-tag">₹${s.milkCost || '-'} / liter</div>
+            <div class="contact-row">
+              <span>📍 ${s.address || 'Address not provided'}</span>
+              <span>📞 ${s.phone || 'N/A'}</span>
+              <span>✉️ ${s.email || 'N/A'}</span>
+            </div>
+          </div>
+        </div>
+        <div class="divider"></div>
+        <div class="row" style="margin-top:6px">
+          <label>Liters: <input id="orderLiters" type="number" min="1" value="1" style="padding:8px 10px;border:1px solid #ddd;border-radius:10px;width:96px;font-weight:700"></label>
+        </div>
+        <div class="btn-row">
+          <button id="placeOrder" style="background:#2b652e;color:#fff;padding:10px 12px;border-radius:10px;border:none;cursor:pointer">Order</button>
+          <button id="addToCart" style="background:#ff9f1c;color:#fff;padding:10px 12px;border-radius:10px;border:none;cursor:pointer">Add to cart</button>
+          <button id="closeModal" class="link">Close</button>
+        </div>
+      `;
+      modalBack.style.display = 'flex';
+      document.getElementById('closeModal').onclick = () => modalBack.style.display = 'none';
+      modalBack.onclick = (e) => { if (e.target === modalBack) modalBack.style.display = 'none'; };
+
+      document.getElementById('placeOrder').onclick = async () => {
+        const liters = Number(document.getElementById('orderLiters').value) || 0;
+        if (liters <= 0) { alert('Enter valid liters'); return; }
+        let current = JSON.parse(localStorage.getItem('currentUser') || 'null');
+
+        // If user not logged-in as client, open in-page login modal and continue after login
+        if (!current || current.role !== 'client') {
+          showLoginModal(async (user, token) => {
+            // refresh current after login
+            current = JSON.parse(localStorage.getItem('currentUser') || 'null');
+            if (!current || current.role !== 'client') {
+              alert('Please log in as a client account to place orders.');
+              return;
+            }
+            // attempt to place order via server if token available
+            if (token) {
+              try {
+                await apiFetch('/orders', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ items: [{ sellerId: s._id, liters, milkCost: s.milkCost || 0 }] }) });
+                modalBack.style.display = 'none';
+                alert('Order placed. Seller will be notified.');
+                return;
+              } catch (e) { /* continue to local fallback */ }
+            }
+            // local fallback if server unavailable
+            const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+            const total = (s.milkCost || 0) * liters;
+            const order = { id: Date.now(), sellerId: s._id, buyerPhone: current.phone, buyerName: current.fname + ' ' + (current.lname || ''), liters, total, time: new Date().toISOString() };
+            orders.push(order);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+            messages.push({ id: Date.now(), sellerId: s._id, text: `New order from ${order.buyerName || order.buyerPhone}: ${liters}L. Total ₹${total}`, orderId: order.id, time: order.time });
+            localStorage.setItem('messages', JSON.stringify(messages));
+            modalBack.style.display = 'none';
+            alert('Order placed (offline). Seller will be notified when synced.');
+          });
+          return;
+        }
+
+        // Already logged-in client: try server first, then local fallback
+        const token = getToken();
+        if (token) {
+          try {
+            await apiFetch('/orders', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ items: [{ sellerId: s._id, liters, milkCost: s.milkCost || 0 }] }) });
+            modalBack.style.display = 'none';
+            alert('Order placed. Seller will be notified.');
+            return;
+          } catch (e) { /* fallback to local */ }
+        }
+        const orders = JSON.parse(localStorage.getItem('orders') || '[]');
+        const total = (s.milkCost || 0) * liters;
+        const order = { id: Date.now(), sellerId: s._id, buyerPhone: current.phone, buyerName: current.fname + ' ' + (current.lname || ''), liters, total, time: new Date().toISOString() };
+        orders.push(order);
+        localStorage.setItem('orders', JSON.stringify(orders));
+        const messages = JSON.parse(localStorage.getItem('messages') || '[]');
+        messages.push({ id: Date.now(), sellerId: s._id, text: `New order from ${order.buyerName || order.buyerPhone}: ${liters}L. Total ₹${total}`, orderId: order.id, time: order.time });
+        localStorage.setItem('messages', JSON.stringify(messages));
+        modalBack.style.display = 'none';
+        alert('Order placed (offline). Seller will be notified when synced.');
+      };
+
+      // Add to cart handler: saves cart item in localStorage.cart
+      document.getElementById('addToCart').onclick = async () => {
+        const liters = Number(document.getElementById('orderLiters').value) || 0;
+        if (liters <= 0) { alert('Enter valid liters'); return; }
+        const current = JSON.parse(localStorage.getItem('currentUser') || 'null');
+        const token = getToken();
+        if (current && current.role === 'client' && token) {
+          try {
+            await apiFetch('/cart', { method: 'POST', headers: { 'Content-Type': 'application/json', 'Authorization': 'Bearer ' + token }, body: JSON.stringify({ sellerId: s._id, liters, milkCost: s.milkCost || 0 }) });
+            alert('Added to cart (server). You can review your cart page.');
+            window.dispatchEvent(new Event('storage'));
+            return;
+          } catch (e) { /* fallback to local */ }
+        }
+        const cart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const item = { sellerId: s._id, sellerName: name, milkCost: s.milkCost || 0, liters };
+        cart.push(item);
+        localStorage.setItem('cart', JSON.stringify(cart));
+        if (!current || current.role !== 'client') alert('Added to cart locally. Log in as a client to place orders.'); else alert('Added to cart locally.');
+        try { window.dispatchEvent(new Event('storage')); } catch (e) { }
+      };
+      // Register this profile: prefill register form via query params
+    }
+
+    // Render seller banner based on current user role
+    function renderSellerBanner() {
+      const banner = document.getElementById('sellerBanner');
+      if (!banner) return;
+      const current = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      const textEl = banner.querySelector('div');
+      const btn = document.getElementById('openSellerReg');
+      if (!textEl || !btn) return;
+      if (current && current.role === 'seller') {
+        textEl.textContent = 'Welcome! You are logged in as a Milk Seller.';
+        btn.textContent = 'Go to Dashboard';
+        btn.onclick = () => { window.location.href = 'dashboard.html'; };
+      } else {
+        textEl.textContent = 'Are you a Milk Seller? Register your profile and start receiving orders.';
+        btn.textContent = 'Register as Seller';
+        btn.onclick = () => { showSellerRegisterModal(); };
+      }
+    }
+
+    // Open seller registration modal on index page
+    function showSellerRegisterModal() {
+      const modalBack = document.getElementById('modalBack');
+      const content = document.getElementById('modalContent');
+      const current = JSON.parse(localStorage.getItem('currentUser') || 'null');
+      if (current && current.role === 'seller') { window.location.href = 'dashboard.html'; return; }
+      modalBack.style.display = 'flex';
+      content.innerHTML = `
+        <h3 style="margin-top:0">Register as Milk Seller</h3>
+        <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <input id="regFname" placeholder="First name">
+          <input id="regLname" placeholder="Last name">
+        </div>
+        <div class="row"><input id="regPhone" placeholder="Mobile number (+91xxxxxxxxxx)"></div>
+        <div class="row"><input id="regEmail" type="email" placeholder="Email"></div>
+        <div class="row"><input id="regPassword" type="password" placeholder="Password"></div>
+        <div class="row" style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <select id="regMilkType">
+            <option value="">Milk type</option>
+            <option value="cow">Cow</option>
+            <option value="buffalo">Buffalo</option>
+          </select>
+          <input id="regMilkCost" type="number" min="1" step="0.01" placeholder="Price per liter (₹)">
+        </div>
+        <div class="row"><input id="regAddress" placeholder="Address"></div>
+        <div class="row"><input id="regPhoto" placeholder="Photo URL (optional)"></div>
+        <div class="btn-row">
+          <button id="submitSellerReg" style="background:#2b652e;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer">Create Seller Account</button>
+          <button id="closeSellerReg" class="link">Close</button>
+        </div>
+      `;
+      document.getElementById('closeSellerReg').onclick = () => { modalBack.style.display = 'none'; };
+      document.getElementById('submitSellerReg').onclick = async () => {
+        const fname = (document.getElementById('regFname').value || '').trim();
+        const lname = (document.getElementById('regLname').value || '').trim();
+        const phone = (document.getElementById('regPhone').value || '').trim();
+        const email = (document.getElementById('regEmail').value || '').trim();
+        const password = (document.getElementById('regPassword').value || '');
+        const milkType = document.getElementById('regMilkType').value;
+        const milkCost = Number(document.getElementById('regMilkCost').value) || 0;
+        const address = (document.getElementById('regAddress').value || '').trim();
+        const photo = (document.getElementById('regPhoto').value || '').trim();
+        if (!fname || !lname || !phone || !email || !password) { alert('Please fill all required fields'); return; }
+        if (!milkType || milkCost <= 0) { alert('Please select milk type and valid price'); return; }
+        const payload = { role: 'seller', fname, lname, phone, email, password, milkType, milkCost, address }; if (photo) payload.photo = photo;
+        try {
+          const result = await apiFetch('/register', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+          const token = result.token; const user = result.user;
+          localStorage.setItem('currentUser', JSON.stringify(Object.assign({}, user, { token })));
+          // sync local users list for offline
+          const localUsers = JSON.parse(localStorage.getItem('users') || '[]'); localUsers.push(user); localStorage.setItem('users', JSON.stringify(localUsers));
+          window.location.href = 'dashboard.html';
+          return;
+        } catch (e) {
+          // fallback local registration
+          const user = Object.assign({ _id: uid() }, payload);
+          const users = JSON.parse(localStorage.getItem('users') || '[]'); users.push(user); localStorage.setItem('users', JSON.stringify(users));
+          localStorage.setItem('currentUser', JSON.stringify({ phone: user.phone, role: user.role, fname: user.fname, _id: user._id }));
+          window.location.href = 'dashboard.html';
+          return;
+        }
+      };
+    }
+
+    document.getElementById('allBtn').addEventListener('click', () => render());
+    document.getElementById('cowBtn').addEventListener('click', () => render('cow'));
+    document.getElementById('buffaloBtn').addEventListener('click', () => render('buffalo'));
+
+    window.addEventListener('storage', () => {
+      // On storage changes re-render the public seller listing and account/banner state
+      render(); renderAccountArea(); renderSellerBanner();
+      const filters = document.querySelector('.filters'); if (filters) filters.style.display = 'block';
+    });
+    document.addEventListener('DOMContentLoaded', () => {
+      // Always render the public seller listing on page load
+      render(); renderAccountArea(); renderSellerBanner();
+      const filters = document.querySelector('.filters'); if (filters) filters.style.display = 'block';
+      // attach inline register CTA button
+      const registerCTA = document.getElementById('registerCTA');
+      if (registerCTA) { registerCTA.addEventListener('click', () => showSellerRegisterModal()); }
+      const openSellerReg = document.getElementById('openSellerReg');
+      if (openSellerReg) { openSellerReg.addEventListener('click', () => showSellerRegisterModal()); }
+    });
+    // intro overlay hide logic: wait for window load then hide overlay
+    window.addEventListener('load', function () {
+      const intro = document.getElementById('introOverlay');
+      if (!intro) return;
+      // keep overlay visible briefly then hide
+      setTimeout(() => { intro.classList.add('intro-hide'); }, 1600);
+      // remove element after hide transition completes
+      intro.addEventListener('transitionend', function () { try { intro.remove(); } catch (e) { } });
+    });
+  </script>
+</body>
+
+</html>

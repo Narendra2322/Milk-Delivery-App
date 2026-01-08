@@ -1,0 +1,28 @@
+[
+    {
+        "fname": "John",
+        "lname": "Doe",
+        "mobile": "1234567890",
+        "password": "password123",
+        "email": "john.doe@example.com",
+        "milkType": "cow",
+        "milkCost": 50,
+        "address": "123 Milk Lane, Dairy City",
+        "role": "seller",
+        "photo": "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+        "_id": "1"
+    },
+    {
+        "fname": "Jane",
+        "lname": "Smith",
+        "mobile": "0987654321",
+        "password": "password456",
+        "email": "jane.smith@example.com",
+        "milkType": "buffalo",
+        "milkCost": 60,
+        "address": "456 Cream Street, Dairy Town",
+        "role": "seller",
+        "photo": "https://cdn-icons-png.flaticon.com/512/616/616408.png",
+        "_id": "2"
+    }
+]

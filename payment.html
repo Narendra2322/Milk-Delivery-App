@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Payment - Shift White Gold</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f7f7f7;margin:0;padding:20px}
+    .card{max-width:900px;margin:20px auto;padding:18px;background:#fff;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,0.06)}
+    h2{color:#2b652e}
+    .item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee}
+    .summary{margin-top:12px;text-align:right}
+    .choices{margin-top:14px}
+    .cod{display:flex;align-items:center;gap:8px}
+    button{padding:10px 12px;border-radius:8px;border:none;cursor:pointer}
+    .btn-confirm{background:#2b652e;color:#fff}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin:0">Payment</h2>
+      <div style="display:flex;gap:10px">
+        <button onclick="location.href='orders.html'" style="background:#2196f3;color:#fff;padding:8px 12px;border-radius:8px;border:none;cursor:pointer">📋 My Orders</button>
+        <button onclick="location.href='index.html'" style="background:#eee;color:#222;padding:8px 12px;border-radius:8px;border:none;cursor:pointer">Home</button>
+      </div>
+    </div>
+    <div id="items"></div>
+    <div class="summary">
+      <div><strong>Total:</strong> <span id="total">₹0</span></div>
+    </div>
+
+    <div class="choices">
+      <h3>Payment Method</h3>
+      <label class="cod"><input type="radio" name="pay" value="cod" checked> Cash on Delivery</label>
+    </div>
+
+    <div style="text-align:right;margin-top:18px">
+      <button id="confirmBtn" class="btn-confirm">Confirm Order (Cash on Delivery)</button>
+      <button id="cancelBtn" style="margin-left:8px">Cancel</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:4000/api';
+    function getToken(){ const cur = JSON.parse(localStorage.getItem('currentUser')||'null'); return cur && cur.token ? cur.token : null; }
+    function getCurrent(){ return JSON.parse(localStorage.getItem('currentUser')||'null'); }
+    function apiFetch(path, opts){ return fetch(API_BASE + path, opts).then(r=>{ if(!r.ok) throw new Error('Network error'); return r.json(); }); }
+
+    function loadPaymentCart(){
+      const cart = JSON.parse(localStorage.getItem('paymentCart')||'null');
+      if(!cart) return [];
+      return cart;
+    }
+
+    function render(){
+      const items = loadPaymentCart();
+      const container = document.getElementById('items');
+      container.innerHTML = '';
+      if(!items || items.length === 0){ container.innerHTML = '<div style="color:#666;padding:18px">No items to pay for. Please add items to cart.</div>'; document.getElementById('confirmBtn').disabled = true; return; }
+      let total = 0;
+      items.forEach(it=>{
+        const div = document.createElement('div'); div.className='item';
+        const name = it.sellerName || it.name || '';
+        const price = (it.milkCost || it.price || 0) * (it.liters || 0);
+        total += price;
+        div.innerHTML = `<div><strong>${name}</strong><div style="color:#666">${it.liters} L x ₹${it.milkCost || it.price || 0}/L</div></div><div>₹${price}</div>`;
+        container.appendChild(div);
+      });
+      document.getElementById('total').textContent = '₹' + total;
+    }
+
+    document.getElementById('cancelBtn').addEventListener('click', ()=>{ window.location.href = 'cart.html'; });
+
+    document.getElementById('confirmBtn').addEventListener('click', async ()=>{
+      const current = getCurrent();
+      if(!current || current.role !== 'client'){
+        localStorage.setItem('pendingCart','1');
+        window.location.href = 'login.html?redirect=payment.html';
+        return;
+      }
+      const items = loadPaymentCart();
+      if(!items || items.length === 0){ alert('Nothing to order'); return; }
+      const token = getToken();
+      // Build API items
+      const apiItems = items.map(it=>({ sellerId: it.sellerId, liters: it.liters, milkCost: it.milkCost || 0 }));
+      if(token){
+        try{
+          // For COD we still create order via API, payment handled offline by seller
+          const result = await apiFetch('/orders', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body: JSON.stringify({ items: apiItems }) });
+          // clear carts
+          localStorage.removeItem('paymentCart');
+          localStorage.setItem('cart', JSON.stringify([]));
+          // Get the first order ID for tracking
+          const orderId = (result.orders && result.orders[0]) ? result.orders[0].id : null;
+          alert('Order placed with Cash on Delivery. Track your delivery now!');
+          window.location.href = orderId ? 'tracking.html?orderId=' + orderId : 'index.html';
+          return;
+        }catch(e){ /* fallback to local */ }
+      }
+      // Offline / local fallback: write to localStorage.orders and messages
+      const users = JSON.parse(localStorage.getItem('users')||'[]');
+      const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+      const messages = JSON.parse(localStorage.getItem('messages')||'[]');
+      let firstOrderId = null;
+      items.forEach((it, idx) => {
+        const seller = users.find(u=>u._id===it.sellerId) || {};
+        const total = (seller.milkCost || it.milkCost || 0) * it.liters;
+        const orderId = Date.now() + idx + Math.floor(Math.random()*1000);
+        if(idx === 0) firstOrderId = orderId;
+        const order = { id: orderId, sellerId: it.sellerId, buyerPhone: current.phone, buyerName: current.fname+' '+(current.lname||''), liters: it.liters, total, time: new Date().toISOString(), paymentMethod: 'COD' };
+        orders.push(order);
+        messages.push({ id: Date.now()+Math.random(), sellerId: it.sellerId, text:`Order from ${order.buyerName || order.buyerPhone}: ${order.liters}L. Total ₹${order.total}`, orderId: order.id, time: order.time });
+      });
+      localStorage.setItem('orders', JSON.stringify(orders));
+      localStorage.setItem('messages', JSON.stringify(messages));
+      localStorage.removeItem('paymentCart');
+      localStorage.setItem('cart', JSON.stringify([]));
+      alert('Order placed (offline) with Cash on Delivery. Track your delivery now!');
+      window.location.href = firstOrderId ? 'tracking.html?orderId=' + firstOrderId : 'index.html';
+    });
+
+    // When page loads, if there is pendingCart and user logged-in, prefill paymentCart from cart
+    document.addEventListener('DOMContentLoaded', ()=>{
+      const pending = localStorage.getItem('pendingCart');
+      const current = getCurrent();
+      if(pending && current && current.role === 'client'){
+        try{
+          const cart = JSON.parse(localStorage.getItem('cart')||'[]');
+          if(cart && cart.length) localStorage.setItem('paymentCart', JSON.stringify(cart));
+          localStorage.removeItem('pendingCart');
+        }catch(e){}
+      }
+      render();
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Register - Shift White Gold</title>
+  <style>
+    body{font-family:Arial,Helvetica,sans-serif;background:#f7f7f7;margin:0;min-height:100vh;display:flex;align-items:center;justify-content:center}
+    .card{width:420px;background:#fff;padding:20px;border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,0.06)}
+    h2{margin:0 0 12px 0}
+    .row{margin-top:10px}
+    label{display:block;margin-bottom:6px;color:#333}
+    input,select,textarea{width:100%;padding:8px;border:1px solid #ddd;border-radius:6px}
+    button{background:#2b652e;color:#fff;border:none;padding:10px 12px;border-radius:8px;cursor:pointer}
+    .small{margin-top:12px;font-size:0.9rem;color:#666}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Create account</h2>
+
+    <div class="row">
+      <label for="role">Register As</label>
+      <select id="role">
+        <option value="seller">Milk Seller</option>
+        <option value="client">Client</option>
+      </select>
+    </div>
+
+    <div class="row"><label for="fname">First name</label><input id="fname" type="text" autocomplete="given-name"></div>
+    <div class="row"><label for="lname">Last name</label><input id="lname" type="text" autocomplete="family-name"></div>
+    <div class="row"><label for="phone">Mobile number</label><input id="phone" type="tel" placeholder="+91xxxxxxxxxx" autocomplete="tel"></div>
+    <div class="row"><label for="email">Email</label><input id="email" type="email" autocomplete="email"></div>
+    <div class="row"><label for="password">Password</label><input id="password" type="password" autocomplete="new-password"></div>
+
+    <div id="sellerFields" style="display:none">
+      <div class="row"><label for="milkType">Milk type</label>
+        <select id="milkType">
+          <option value="">Select milk type</option>
+          <option value="cow">Cow</option>
+          <option value="buffalo">Buffalo</option>
+        </select>
+      </div>
+      <div class="row"><label for="milkCost">Price per liter (₹)</label><input id="milkCost" type="number" min="1" step="0.01"></div>
+      <div class="row"><label for="address">Address</label><textarea id="address" rows="2"></textarea></div>
+      <div class="row"><label for="photo">Photo URL (optional)</label><input id="photo" type="url"></div>
+    </div>
+
+    <div class="row" style="margin-top:14px"><button id="registerBtn">Register</button></div>
+    <div class="small">Already registered? <a href="login.html">Login</a></div>
+  </div>
+
+  <script>
+    // generate small unique id
+    function uid(){ return 'u'+Date.now()+Math.floor(Math.random()*1000); }
+
+    // DOM refs (declared once)
+    const roleEl = document.getElementById('role');
+    const sellerFields = document.getElementById('sellerFields');
+    const registerBtn = document.getElementById('registerBtn');
+    const milkTypeEl = document.getElementById('milkType');
+    const milkCostEl = document.getElementById('milkCost');
+    const addressEl = document.getElementById('address');
+
+    function toggleSellerFields(){
+      const isSeller = roleEl.value === 'seller';
+      sellerFields.style.display = isSeller ? 'block' : 'none';
+      // toggle required attributes so clients don't need these
+      milkTypeEl.required = isSeller;
+      milkCostEl.required = isSeller;
+      addressEl.required = isSeller;
+    }
+
+    // initialize visibility on load
+    toggleSellerFields();
+    roleEl.addEventListener('change', toggleSellerFields);
+
+    // Prefill form from query params (e.g., when registering from a seller profile)
+    function prefillFromQuery(){
+      const qs = new URLSearchParams(window.location.search);
+      const role = qs.get('role');
+      if(role){ roleEl.value = role; }
+      const fname = qs.get('fname'); if(fname) document.getElementById('fname').value = fname;
+      const lname = qs.get('lname'); if(lname) document.getElementById('lname').value = lname;
+      const phone = qs.get('phone'); if(phone) document.getElementById('phone').value = phone;
+      const email = qs.get('email'); if(email) document.getElementById('email').value = email;
+      const milkType = qs.get('milkType'); if(milkType) document.getElementById('milkType').value = milkType;
+      const milkCost = qs.get('milkCost'); if(milkCost) document.getElementById('milkCost').value = milkCost;
+      const address = qs.get('address'); if(address) document.getElementById('address').value = address;
+      const photo = qs.get('photo'); if(photo) document.getElementById('photo').value = photo;
+      // after applying values, ensure seller fields visible when role is seller
+      toggleSellerFields();
+    }
+    // run prefill on load
+    prefillFromQuery();
+
+    function getUsers(){ return JSON.parse(localStorage.getItem('users') || '[]'); }
+    function saveUsers(list){ localStorage.setItem('users', JSON.stringify(list)); }
+
+    // small API helper (fallback to localStorage when network unavailable)
+    const API_BASE = 'http://localhost:4000/api';
+    async function apiFetch(path, opts){
+      try{
+        const res = await fetch(API_BASE + path, opts);
+        if(!res.ok) throw new Error('Network response was not ok');
+        return await res.json();
+      }catch(e){ throw e; }
+    }
+
+    registerBtn.addEventListener('click', async () => {
+      const role = roleEl.value;
+      const fname = (document.getElementById('fname').value || '').trim();
+      const lname = (document.getElementById('lname').value || '').trim();
+      const phone = (document.getElementById('phone').value || '').trim();
+      const email = (document.getElementById('email').value || '').trim().toLowerCase();
+      const password = (document.getElementById('password').value || '');
+      if(!fname || !lname || !phone || !email || !password){ alert('Please fill required fields'); return; }
+
+      const users = getUsers();
+      if(users.some(u => u.phone === phone)){ alert('Mobile number already registered'); return; }
+      if(users.some(u => (u.email || '').toLowerCase() === email)){ alert('Email already registered'); return; }
+
+      const payload = { role, fname, lname, phone, email, password };
+      if(role === 'seller'){
+        const milkType = document.getElementById('milkType').value;
+        const milkCost = Number(document.getElementById('milkCost').value) || 0;
+        const address = (document.getElementById('address').value || '').trim();
+        const photo = (document.getElementById('photo').value || '').trim();
+        if(!milkType || milkCost <= 0){ alert('Please select milk type and enter a valid cost'); return; }
+        payload.milkType = milkType;
+        payload.milkCost = milkCost;
+        payload.address = address;
+        if(photo) payload.photo = photo;
+      }
+
+      // Try backend register first
+      try{
+        const result = await apiFetch('/register', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
+        // success -> store user in local users list but DO NOT auto-login
+        const token = result.token;
+        const user = result.user;
+        // sync local users list (keep a copy locally)
+        const local = getUsers(); local.push(user); saveUsers(local);
+        // redirect to login so user must explicitly authenticate
+        const redirectUrl = 'login.html' + (user && user.phone ? ('?phone=' + encodeURIComponent(user.phone)) : '');
+        window.location.href = redirectUrl;
+        return;
+      }catch(err){
+        // fallback to localStorage when backend not available
+        const user = Object.assign({ _id: uid() }, payload);
+        users.push(user);
+        saveUsers(users);
+        // do not auto-login on fallback either; redirect to login page and prefill phone
+        const redirectUrl = 'login.html' + (user && user.phone ? ('?phone=' + encodeURIComponent(user.phone)) : '');
+        window.location.href = redirectUrl;
+        return;
+      }
+    });
+  </script>
+</body>
+</html>

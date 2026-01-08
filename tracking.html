@@ -1,0 +1,454 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Track Your Order - Shift White Gold</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <style>
+    html,body{height:100%;margin:0;font-family:Arial,sans-serif;background:#f7f7f7}
+    .header{display:flex;justify-content:space-between;align-items:center;padding:14px 24px;background:#fff;box-shadow:0 2px 12px rgba(0,0,0,0.04);position:sticky;top:0;z-index:1000}
+    .logo{font-weight:800;color:#2b652e;font-size:1.15em}
+    .btn{background:#2b652e;color:#fff;border:none;padding:8px 16px;border-radius:8px;cursor:pointer;text-decoration:none;display:inline-block}
+    .container{max-width:1200px;margin:20px auto;padding:0 20px}
+    .status-bar{background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:20px}
+    .status-steps{display:flex;justify-content:space-between;align-items:center;position:relative;margin:30px 0}
+    .status-steps::before{content:'';position:absolute;top:20px;left:0;right:0;height:4px;background:#e0e0e0;z-index:0}
+    .status-progress{position:absolute;top:20px;left:0;height:4px;background:#4caf50;z-index:1;transition:width 0.5s ease}
+    .step{position:relative;z-index:2;text-align:center;flex:1}
+    .step-icon{width:40px;height:40px;border-radius:50%;background:#e0e0e0;color:#999;display:flex;align-items:center;justify-content:center;margin:0 auto 8px;font-weight:800;transition:all 0.3s}
+    .step.active .step-icon{background:#4caf50;color:#fff;transform:scale(1.1)}
+    .step.completed .step-icon{background:#4caf50;color:#fff}
+    .step-label{font-size:0.85rem;color:#666;font-weight:600}
+    .step.active .step-label{color:#2b652e;font-weight:800}
+    #map{height:450px;border-radius:12px;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:20px}
+    .info-card{background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.06);margin-bottom:20px}
+    .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:16px;margin-top:16px}
+    .info-item{background:#f8f9fa;padding:12px;border-radius:8px}
+    .info-label{color:#666;font-size:0.85rem;font-weight:600;margin-bottom:4px}
+    .info-value{color:#222;font-size:1.1rem;font-weight:800}
+    .delivery-eta{background:linear-gradient(135deg,#2b652e,#3a8540);color:#fff;padding:20px;border-radius:12px;text-align:center;margin-bottom:20px}
+    .delivery-eta-time{font-size:2rem;font-weight:800;margin:10px 0}
+    .timeline{background:#fff;border-radius:12px;padding:20px;box-shadow:0 4px 12px rgba(0,0,0,0.06)}
+    .timeline-item{display:flex;gap:16px;padding:12px 0;border-bottom:1px solid #eee}
+    .timeline-item:last-child{border-bottom:none}
+    .timeline-dot{width:12px;height:12px;border-radius:50%;background:#4caf50;margin-top:4px;flex-shrink:0}
+    .timeline-dot.pending{background:#ffc107}
+    .timeline-content{flex:1}
+    .timeline-title{font-weight:700;color:#222;margin-bottom:4px}
+    .timeline-time{color:#999;font-size:0.85rem}
+    .no-orders{text-align:center;padding:60px 20px;color:#666}
+    @media(max-width:768px){.status-steps{flex-direction:column;gap:20px}.status-steps::before{display:none}}
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">🥛 Shift White Gold</div>
+    <div style="display:flex;gap:10px">
+      <a href="index.html" class="btn" style="background:#eee;color:#222">Home</a>
+      <a href="orders.html" class="btn" style="background:#2196f3;color:#fff">My Orders</a>
+      <a href="cart.html" class="btn">Cart</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1 style="color:#2b652e;margin:20px 0">Track Your Delivery</h1>
+    
+    <div id="liveIndicator" style="display:none;position:fixed;bottom:20px;right:20px;background:#4caf50;color:#fff;padding:10px 16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.2);z-index:1000;font-size:0.9rem;font-weight:700">
+      <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:#fff;margin-right:8px;animation:blink 1.5s infinite"></span>
+      Live Tracking Active
+    </div>
+    
+    <div id="orderNotFound" class="no-orders" style="display:none">
+      <div style="font-size:3rem;margin-bottom:16px">📦</div>
+      <h2 style="color:#666">No Active Orders</h2>
+      <p>You don't have any orders to track yet.</p>
+      <a href="index.html" class="btn" style="margin-top:16px">Browse Sellers</a>
+    </div>
+
+    <div id="trackingContent" style="display:none">
+      <div class="delivery-eta">
+        <div style="font-size:0.95rem;opacity:0.9">Estimated Delivery Time</div>
+        <div class="delivery-eta-time" id="etaTime">--</div>
+        <div style="font-size:0.9rem;opacity:0.9" id="etaDate">--</div>
+      </div>
+
+      <div class="status-bar">
+        <h2 style="margin:0 0 10px 0;color:#2b652e">Order Status</h2>
+        <div class="status-steps">
+          <div class="status-progress" id="statusProgress"></div>
+          <div class="step" id="step1">
+            <div class="step-icon">1</div>
+            <div class="step-label">Order Placed</div>
+          </div>
+          <div class="step" id="step2">
+            <div class="step-icon">2</div>
+            <div class="step-label">Confirmed</div>
+          </div>
+          <div class="step" id="step3">
+            <div class="step-icon">3</div>
+            <div class="step-label">Out for Delivery</div>
+          </div>
+          <div class="step" id="step4">
+            <div class="step-icon">4</div>
+            <div class="step-label">Delivered</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="map"></div>
+
+      <div class="info-card">
+        <h2 style="margin:0 0 16px 0;color:#2b652e">Order Details</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">Order ID</div>
+            <div class="info-value" id="orderId">--</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Seller</div>
+            <div class="info-value" id="sellerName">--</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Quantity</div>
+            <div class="info-value" id="quantity">--</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Total Amount</div>
+            <div class="info-value" id="totalAmount">--</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Seller Contact</div>
+            <div class="info-value" id="sellerPhone">--</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">Payment Method</div>
+            <div class="info-value">Cash on Delivery</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <h2 style="margin:0 0 16px 0;color:#2b652e">Delivery Timeline</h2>
+        <div id="timeline"></div>
+      </div>
+    </div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    const API_BASE = 'http://localhost:4000/api';
+    let map, sellerMarker, customerMarker, deliveryLine, deliveryPersonMarker;
+    let sellerLocation = null;
+    let customerLocation = null;
+    let deliveryHasPosition = false;
+    let currentOrderId = null;
+    let lastKnownStatus = null;
+    let autoRefreshInterval = null;
+
+    function getUrlParam(name){
+      const params = new URLSearchParams(location.search);
+      return params.get(name);
+    }
+
+    function getCurrent(){ return JSON.parse(localStorage.getItem('currentUser')||'null'); }
+    function getToken(){ const cur = getCurrent(); return cur && cur.token ? cur.token : null; }
+
+    async function loadOrder(orderId){
+      const token = getToken();
+      if(token){
+        try{
+          const res = await fetch(API_BASE + '/orders', { headers: { 'Authorization': 'Bearer ' + token }});
+          if(res.ok){
+            const orders = await res.json();
+            return orders.find(o => String(o.id) === String(orderId));
+          }
+        }catch(e){}
+      }
+      // Fallback to localStorage
+      const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+      return orders.find(o => String(o.id) === String(orderId));
+    }
+
+    async function loadSeller(sellerId){
+      try{
+        const res = await fetch(API_BASE + '/sellers');
+        if(res.ok){
+          const sellers = await res.json();
+          return sellers.find(s => s._id === sellerId);
+        }
+      }catch(e){}
+      // Fallback
+      const users = JSON.parse(localStorage.getItem('users')||'[]');
+      return users.find(u => u._id === sellerId && u.role === 'seller');
+    }
+
+    function initMap(){
+      // Default center (India)
+      map = L.map('map').setView([20.5937, 78.9629], 5);
+      
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '© OpenStreetMap contributors',
+        maxZoom: 18
+      }).addTo(map);
+    }
+
+    function updateMapMarkers(sellerLoc, customerLoc){
+      sellerLocation = sellerLoc;
+      customerLocation = customerLoc;
+
+      if(sellerMarker) map.removeLayer(sellerMarker);
+      if(customerMarker) map.removeLayer(customerMarker);
+      if(deliveryLine) map.removeLayer(deliveryLine);
+
+      const sellerIcon = L.divIcon({
+        html: '<div style="background:#2b652e;color:#fff;padding:8px;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 4px 8px rgba(0,0,0,0.3)">🥛</div>',
+        iconSize: [40, 40],
+        className: ''
+      });
+      sellerMarker = L.marker(sellerLoc, {icon: sellerIcon}).addTo(map);
+      sellerMarker.bindPopup('<b>Seller Location</b><br>Milk pickup point');
+
+      const customerIcon = L.divIcon({
+        html: '<div style="background:#ff6b00;color:#fff;padding:8px;border-radius:50%;width:40px;height:40px;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 4px 8px rgba(0,0,0,0.3)">📍</div>',
+        iconSize: [40, 40],
+        className: ''
+      });
+      customerMarker = L.marker(customerLoc, {icon: customerIcon}).addTo(map);
+      customerMarker.bindPopup('<b>Your Location</b><br>Delivery destination');
+
+      deliveryLine = L.polyline([sellerLoc, customerLoc], {
+        color: '#2b652e',
+        weight: 3,
+        opacity: 0.7,
+        dashArray: '10, 10'
+      }).addTo(map);
+
+      const bounds = L.latLngBounds([sellerLoc, customerLoc]);
+      map.fitBounds(bounds, {padding: [50, 50]});
+    }
+
+    function ensureDeliveryMarker(){
+      if(deliveryPersonMarker) return;
+      const deliveryPersonIcon = L.divIcon({
+        html: '<div style="background:#4caf50;color:#fff;padding:8px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 4px 8px rgba(0,0,0,0.3);animation:pulse 1.5s infinite">🚚</div>',
+        iconSize: [36, 36],
+        className: ''
+      });
+      deliveryPersonMarker = L.marker([0, 0], {icon: deliveryPersonIcon}).addTo(map);
+      deliveryPersonMarker.bindPopup('<b>Delivery in Progress</b><br>Your order is on the way!');
+    }
+
+    function updateDeliveryPosition(loc){
+      if(!loc || typeof loc.lat !== 'number' || typeof loc.lng !== 'number' || !map) return;
+      ensureDeliveryMarker();
+      deliveryPersonMarker.setLatLng([loc.lat, loc.lng]);
+      deliveryHasPosition = true;
+
+      const points = [];
+      if(sellerLocation) points.push(sellerLocation);
+      if(customerLocation) points.push(customerLocation);
+      points.push([loc.lat, loc.lng]);
+      const bounds = L.latLngBounds(points);
+      map.fitBounds(bounds, { padding: [50, 50] });
+    }
+
+    function getDeliveryStatus(order){
+      const status = order.status || 'placed';
+      if(status === 'delivered') return 4;
+      if(status === 'out_for_delivery') return 3;
+      if(status === 'accepted') return 2;
+      return 1;
+    }
+
+    function updateStatusBar(step){
+      const steps = [1,2,3,4];
+      const progress = ((step - 1) / 3) * 100;
+      document.getElementById('statusProgress').style.width = progress + '%';
+      
+      steps.forEach(s => {
+        const elem = document.getElementById('step' + s);
+        elem.classList.remove('active', 'completed');
+        if(s < step) elem.classList.add('completed');
+        if(s === step) elem.classList.add('active');
+      });
+    }
+
+    function calculateETA(orderTime, status){
+      const orderDate = new Date(orderTime);
+      let hoursToAdd = 2; // Default 2 hours
+      if(status >= 2) hoursToAdd = 1; // 1 hour if confirmed
+      if(status >= 3) hoursToAdd = 0.5; // 30 min if out for delivery
+      
+      const eta = new Date(orderDate.getTime() + hoursToAdd * 60 * 60 * 1000);
+      return eta;
+    }
+
+    function renderTimeline(order){
+      const timeline = document.getElementById('timeline');
+      const events = [
+        {title: 'Order Placed', time: order.time, status: 'completed'},
+        {title: 'Order Confirmed by Seller', time: order.acceptedTime, status: order.status && order.status !== 'placed' ? 'completed' : 'pending'},
+        {title: 'Out for Delivery', time: order.deliveryTime, status: order.status === 'out_for_delivery' || order.status === 'delivered' ? 'completed' : 'pending'},
+        {title: 'Delivered', time: order.deliveredTime, status: order.status === 'delivered' ? 'completed' : 'pending'}
+      ];
+
+      timeline.innerHTML = events.map(e => `
+        <div class="timeline-item">
+          <div class="timeline-dot ${e.status}"></div>
+          <div class="timeline-content">
+            <div class="timeline-title">${e.title}</div>
+            <div class="timeline-time">${e.time ? new Date(e.time).toLocaleString() : 'Pending'}</div>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function renderTracking(){
+      const orderId = getUrlParam('orderId');
+      const current = getCurrent();
+
+      if(!orderId || !current){
+        document.getElementById('orderNotFound').style.display = 'block';
+        return;
+      }
+
+      currentOrderId = orderId; // Store for polling
+
+      const order = await loadOrder(orderId);
+      if(!order){
+        document.getElementById('orderNotFound').style.display = 'block';
+        return;
+      }
+
+      const seller = await loadSeller(order.sellerId);
+      
+      document.getElementById('trackingContent').style.display = 'block';
+
+      // Update order details
+      document.getElementById('orderId').textContent = '#' + String(order.id).substring(0,10);
+      document.getElementById('sellerName').textContent = seller ? `${seller.fname} ${seller.lname}` : 'N/A';
+      document.getElementById('quantity').textContent = order.liters + ' Liters';
+      document.getElementById('totalAmount').textContent = '₹' + order.total;
+      document.getElementById('sellerPhone').textContent = seller ? seller.phone : 'N/A';
+
+      // Update status
+      const deliveryStep = getDeliveryStatus(order);
+      updateStatusBar(deliveryStep);
+      
+      // Store current status for change detection
+      lastKnownStatus = order.status || 'placed';
+
+      // Calculate and display ETA
+      const eta = calculateETA(order.time, deliveryStep);
+      document.getElementById('etaTime').textContent = eta.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+      document.getElementById('etaDate').textContent = eta.toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'});
+
+      // Render timeline
+      renderTimeline(order);
+
+      // Initialize map only once
+      if(!map){
+        initMap();
+      }
+
+      // Use seller address or default coordinates
+      const sellerLoc = seller && seller.address ? 
+        [16.5062 + Math.random() * 0.5, 80.6480 + Math.random() * 0.5] : 
+        [20.5937, 78.9629];
+      
+      const customerLoc = [
+        sellerLoc[0] + (Math.random() - 0.5) * 0.2,
+        sellerLoc[1] + (Math.random() - 0.5) * 0.2
+      ];
+
+      updateMapMarkers(sellerLoc, customerLoc);
+      
+      // Start auto-refresh polling if not already started
+      if(!autoRefreshInterval){
+        autoRefreshInterval = setInterval(checkForUpdates, 5000); // Check every 5 seconds
+        document.getElementById('liveIndicator').style.display = 'block';
+      }
+    }
+
+    async function checkForUpdates(){
+      if(!currentOrderId) return;
+      const token = getToken();
+      const headers = token ? { 'Authorization': 'Bearer ' + token } : {};
+
+      try{
+        if(token){
+          const orderRes = await fetch(API_BASE + '/orders/' + currentOrderId, { headers });
+          if(orderRes.ok){
+            const updatedOrder = await orderRes.json();
+            const deliveryStep = getDeliveryStatus(updatedOrder);
+
+            if((updatedOrder.status || 'placed') !== (lastKnownStatus || 'placed')){
+              updateStatusBar(deliveryStep);
+              renderTimeline(updatedOrder);
+              const eta = calculateETA(updatedOrder.time, deliveryStep);
+              document.getElementById('etaTime').textContent = eta.toLocaleTimeString('en-US', {hour: '2-digit', minute: '2-digit'});
+              document.getElementById('etaDate').textContent = eta.toLocaleDateString('en-US', {weekday: 'short', month: 'short', day: 'numeric'});
+              lastKnownStatus = updatedOrder.status || 'placed';
+            }
+          }
+
+          const locRes = await fetch(API_BASE + '/orders/' + currentOrderId + '/location', { headers });
+          if(locRes.ok){
+            const loc = await locRes.json();
+            if(loc && typeof loc.lat === 'number' && typeof loc.lng === 'number'){
+              updateDeliveryPosition(loc);
+            }
+          }
+        }
+      }catch(e){
+        console.error('Live update failed', e);
+      }
+    }
+
+    function simulateDelivery(start, end){
+      // Simulate delivery person moving from seller to customer
+      let progress = 0;
+      const deliveryPersonIcon = L.divIcon({
+        html: '<div style="background:#4caf50;color:#fff;padding:8px;border-radius:50%;width:36px;height:36px;display:flex;align-items:center;justify-content:center;font-weight:800;box-shadow:0 4px 8px rgba(0,0,0,0.3);animation:pulse 1.5s infinite">🚚</div>',
+        iconSize: [36, 36],
+        className: ''
+      });
+
+      const deliveryMarker = L.marker(start, {icon: deliveryPersonIcon}).addTo(map);
+      deliveryMarker.bindPopup('<b>Delivery in Progress</b><br>Your order is on the way!');
+
+      const interval = setInterval(() => {
+        progress += 0.02;
+        if(progress >= 1){
+          clearInterval(interval);
+          progress = 1;
+        }
+        
+        const lat = start[0] + (end[0] - start[0]) * progress;
+        const lng = start[1] + (end[1] - start[1]) * progress;
+        deliveryMarker.setLatLng([lat, lng]);
+      }, 1000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      renderTracking();
+      
+      // Add animation styles
+      const style = document.createElement('style');
+      style.textContent = `
+        @keyframes slideIn{from{transform:translateX(400px);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+        @keyframes slideOut{from{transform:translateX(0);opacity:1}to{transform:translateX(400px);opacity:0}}
+        @keyframes pulse{0%{transform:scale(1)}50%{transform:scale(1.08)}100%{transform:scale(1)}}
+      `;
+      document.head.appendChild(style);
+    });
+    
+    // Clean up interval when page is closed
+    window.addEventListener('beforeunload', () => {
+      if(autoRefreshInterval) clearInterval(autoRefreshInterval);
+    });
+  </script>
+</body>
+</html>

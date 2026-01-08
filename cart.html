@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Cart - Shift White Gold</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    html,body{height:100%;margin:0;font-family:Arial;background:#f7f7f7}
+    .wrap{max-width:900px;margin:30px auto;padding:18px;background:#fff;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,0.06)}
+    h2{color:#2b652e}
+    .item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #eee}
+    .item .left{display:flex;gap:12px;align-items:center}
+    .item img{width:72px;height:72px;border-radius:8px;object-fit:cover}
+    .qty{width:60px}
+    .actions{display:flex;gap:8px}
+    button{padding:8px 10px;border-radius:8px;border:none;cursor:pointer}
+    .btn-place{background:#2b652e;color:#fff}
+    .empty{text-align:center;color:#666;padding:24px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+      <h2 style="margin:0">Your Cart</h2>
+      <div style="display:flex;gap:10px">
+        <button onclick="location.href='orders.html'" style="background:#2196f3;color:#fff">📋 My Orders</button>
+        <button onclick="location.href='index.html'" style="background:#eee;color:#222">Home</button>
+      </div>
+    </div>
+    <div id="items"></div>
+    <div style="text-align:right;margin-top:14px">
+      <button id="placeAll" class="btn-place">Place Orders</button>
+      <button id="clearCart">Clear Cart</button>
+    </div>
+  </div>
+
+  <script>
+    const API_BASE = 'http://localhost:4000/api';
+    async function apiFetch(path, opts){
+      try{ const res = await fetch(API_BASE + path, opts); if(!res.ok) throw new Error('Network error'); return await res.json(); }catch(e){ throw e; }
+    }
+    function getToken(){ const cur = JSON.parse(localStorage.getItem('currentUser')||'null'); return cur && cur.token ? cur.token : null; }
+    function getUsers(){ return JSON.parse(localStorage.getItem('users')||'[]'); }
+    function getCurrent(){ return JSON.parse(localStorage.getItem('currentUser')||'null'); }
+    function saveCart(c){ localStorage.setItem('cart', JSON.stringify(c)); }
+    async function getCart(){
+      const token = getToken();
+      if(token){
+        try{ const serverCart = await apiFetch('/cart', { headers:{ 'Authorization':'Bearer '+token } });
+          // serverCart is array of items; map to local shape
+          const mapped = (serverCart||[]).map(it=>({ sellerId: it.sellerId, sellerName: it.sellerName || '', milkCost: it.milkCost || 0, liters: it.liters }));
+          // keep local as fallback copy
+          saveCart(mapped);
+          return mapped;
+        }catch(e){ /* fallback to localStorage below */ }
+      }
+      return JSON.parse(localStorage.getItem('cart')||'[]');
+    }
+
+    async function render(){
+      const items = await getCart();
+      const container = document.getElementById('items');
+      container.innerHTML='';
+      if(!items || items.length===0){ container.innerHTML = '<div class="empty">Cart is empty</div>'; return; }
+      const users = getUsers();
+      items.forEach((it, idx)=>{
+        const seller = users.find(u=>u._id===it.sellerId) || {};
+        const div = document.createElement('div'); div.className='item';
+        div.innerHTML = `<div class="left"><img src="${seller.photo||'https://cdn-icons-png.flaticon.com/512/616/616408.png'}"><div><div><strong>${it.sellerName}</strong></div><div style="color:#666">${seller.milkType ? (seller.milkType==='cow'?'Cow Milk':'Buffalo Milk') : ''} • ₹${it.milkCost} / L</div></div></div><div><input class="qty" type="number" min="1" value="${it.liters}" data-idx="${idx}"></div><div class="actions"><button data-idx="${idx}" class="remove">Remove</button></div>`;
+        container.appendChild(div);
+      });
+      container.querySelectorAll('.remove').forEach(b=> b.addEventListener('click', e=>{
+        const i = Number(e.target.dataset.idx);
+        const c = JSON.parse(localStorage.getItem('cart')||'[]'); c.splice(i,1); saveCart(c); render();
+      }));
+      container.querySelectorAll('.qty').forEach(inp=>{
+        inp.addEventListener('change', e=>{
+          const i = Number(e.target.dataset.idx);
+          const val = Number(e.target.value) || 1;
+          const c = JSON.parse(localStorage.getItem('cart')||'[]'); if(c[i]) c[i].liters = val; saveCart(c);
+        });
+      });
+    }
+
+    document.getElementById('clearCart').addEventListener('click', ()=>{ if(confirm('Clear cart?')){ saveCart([]); render(); } });
+
+    document.getElementById('placeAll').addEventListener('click', async ()=>{
+      const current = getCurrent();
+      if(!current || current.role !== 'client'){
+        // save pending intent and redirect to login so user can return to payment
+        localStorage.setItem('pendingCart','1');
+        window.location.href = 'login.html?redirect=payment.html';
+        return;
+      }
+      const cart = await getCart();
+      if(!cart || cart.length===0){ alert('Cart empty'); return; }
+      // store a copy of cart in localStorage.paymentCart to be read by payment page
+      localStorage.setItem('paymentCart', JSON.stringify(cart));
+      // redirect to payment page where the user can choose Cash on Delivery and confirm
+      window.location.href = 'payment.html';
+    });
+
+    window.addEventListener('storage', render);
+    document.addEventListener('DOMContentLoaded', render);
+  </script>
+</body>
+</html>

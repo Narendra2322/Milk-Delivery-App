@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Dashboard - Shift White Gold</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    body { font-family: Arial, sans-serif; background:#f9f9f9; margin:0; }
+    .header { display:flex; justify-content:space-between; align-items:center; padding:14px 24px; background:#fff; box-shadow:0 2px 12px rgba(0,0,0,0.04); position:sticky; top:0; z-index:10; }
+    .logo { font-weight:800; color:#2b652e; font-size:1.15em; }
+    .nav-buttons { display:flex; gap:10px; }
+    .nav-buttons button { background:#2b652e; color:#fff; border:none; padding:8px 12px; border-radius:8px; cursor:pointer; font-weight:700; }
+    main { padding:18px; max-width:1100px; margin:0 auto; }
+    h1 { text-align:center; color:#2b652e; margin:14px 0; }
+    .feed-container { display:flex; flex-wrap:wrap; gap:18px; justify-content:center; margin-top:12px; }
+    .seller-card { width:260px; background:#fff; border-radius:10px; padding:14px; text-align:center; box-shadow:0 6px 18px rgba(0,0,0,0.06); cursor:pointer; }
+    .seller-img { width:80px; height:80px; border-radius:50%; background:#eee; object-fit:cover; margin:0 auto; display:block; }
+    .seller-name { margin-top:10px; font-weight:800; color:#222; }
+    .milk-type { color:#2b652e; font-weight:700; margin-top:6px; }
+    .milk-cost { color:#666; margin-top:6px; }
+    .no-data { text-align:center; color:#666; padding:24px; }
+    .modal-backdrop { position:fixed; inset:0; background:rgba(0,0,0,0.45); display:none; align-items:center; justify-content:center; z-index:220; }
+    .modal { background:#fff; width:94%; max-width:520px; border-radius:12px; padding:18px; box-shadow:0 18px 46px rgba(0,0,0,0.25); }
+    .modal-header { display:flex; justify-content:space-between; align-items:center; }
+    .modal-title { font-weight:800; color:#2b652e; }
+    .modal-close { background:none; border:none; font-size:20px; cursor:pointer; color:#999; }
+    .detail-row { display:flex; justify-content:space-between; padding:10px; margin-top:10px; border-radius:8px; background:#fafafa; }
+    .detail-label { color:#666; font-weight:700; }
+    .detail-value { color:#222; font-weight:800; }
+    @media (max-width:720px) { .seller-card{width:100%;max-width:420px} }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="logo">Shift White Gold</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <div style="position:relative">
+        <div class="account-name" id="accountName" style="color:#2b652e;font-weight:700;cursor:pointer">My Account</div>
+        <div class="dropdown" id="dropdownMenu" style="position:absolute;right:0;top:36px;min-width:140px;background:#fff;border-radius:8px;box-shadow:0 8px 26px rgba(0,0,0,0.12);display:none;overflow:hidden">
+          <button id="signOutBtn" style="width:100%;padding:10px;border:none;background:none;text-align:left;cursor:pointer">Sign Out</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <main>
+  <h1 id="sellersTitle">My Dashboard</h1>
+    <div class="feed-container" id="feed"></div>
+  </main>
+
+  <div class="modal-backdrop" id="modalBackdrop" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-header">
+        <div class="modal-title" id="modalTitle">Seller Details</div>
+        <button class="modal-close" id="modalClose" aria-label="Close">&times;</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script>
+    const currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+    if (!currentUser) {
+      // not logged in -> redirect to login
+      window.location.href = 'login.html?redirect=dashboard.html';
+    } else {
+      if (currentUser && currentUser.fname) {
+        document.getElementById('accountName').textContent = currentUser.fname + (currentUser.lname ? ' ' + currentUser.lname : '');
+      }
+    }
+
+    const dropdownMenu = document.getElementById('dropdownMenu');
+    document.getElementById('accountName').addEventListener('click', (e)=>{ e.stopPropagation(); dropdownMenu.style.display = dropdownMenu.style.display === 'block' ? 'none' : 'block'; });
+    document.addEventListener('click', ()=> dropdownMenu.style.display = 'none');
+    document.getElementById('signOutBtn').addEventListener('click',(e)=>{ e.stopPropagation(); localStorage.removeItem('currentUser'); location.href='login.html'; });
+
+  const users = JSON.parse(localStorage.getItem('users')) || [];
+  const sellers = users.filter(u => u.role === 'seller');
+  const API_BASE = 'http://localhost:4000/api';
+
+    function renderSellers(){
+      const feed = document.getElementById('feed'); const title = document.getElementById('sellersTitle'); feed.innerHTML = '';
+      title.textContent = 'My Dashboard';
+      const info = document.createElement('div');
+      info.className = 'no-data';
+      info.textContent = 'This view is for sellers only. Customers can browse sellers on the home page.';
+      feed.appendChild(info);
+    }
+
+  // If logged-in user is a seller, show seller dashboard (orders only, clear and organized)
+  async function renderSellerDashboard(){
+      const feed = document.getElementById('feed'); const title = document.getElementById('sellersTitle');
+      title.textContent = 'Order Management'; feed.innerHTML = '';
+      
+      const tok = (currentUser && currentUser.token) ? currentUser.token : null;
+      
+      async function loadOrders(){
+        if(tok){
+          try{
+            const res = await fetch(API_BASE + '/orders', { headers: { Authorization: 'Bearer ' + tok }});
+            if(res.ok){ const data = await res.json(); return Array.isArray(data) ? data : (data.orders || []); }
+          }catch(e){ /* fallthrough to local */ }
+        }
+        const localOrders = JSON.parse(localStorage.getItem('orders') || '[]');
+        return localOrders.filter(o => o.sellerId === currentUser._id);
+      }
+
+      const allOrders = await loadOrders();
+      
+      // Remove duplicates based on order ID
+      const uniqueOrders = Array.from(new Map(allOrders.map(o => [o.id, o])).values());
+      
+      // Sort orders: pending first, then by date (newest first)
+      const sortedOrders = uniqueOrders.sort((a, b) => {
+        const statusA = a.status || 'placed';
+        const statusB = b.status || 'placed';
+        if(statusA !== statusB) {
+          return statusA === 'placed' ? -1 : 1; // Pending orders first
+        }
+        return new Date(b.time) - new Date(a.time); // Newest first
+      });
+      
+      if(!sortedOrders.length){ 
+        const p=document.createElement('div'); 
+        p.className='no-data'; 
+        p.innerHTML='<div style="font-size:1.1rem;color:#666">No orders yet</div><div style="margin-top:10px;color:#999;font-size:0.95rem">Orders from customers will appear here</div>'; 
+        feed.appendChild(p); 
+        return; 
+      }
+      
+      // Add section header with order count
+      const pendingCount = sortedOrders.filter(o => (o.status || 'placed') !== 'accepted').length;
+      const acceptedCount = sortedOrders.filter(o => (o.status || 'placed') === 'accepted').length;
+      
+      const header = document.createElement('div'); 
+      header.style.cssText = 'width:100%;margin-bottom:20px;padding:15px;background:linear-gradient(135deg,#2b652e,#3a8540);border-radius:12px;color:#fff;box-shadow:0 4px 12px rgba(43,101,46,0.3)';
+      header.innerHTML = `
+        <div style="font-size:1.3rem;font-weight:800;margin-bottom:8px">📦 Your Orders</div>
+        <div style="display:flex;gap:16px;font-size:0.95rem">
+          <div><span style="background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:6px;font-weight:700">${pendingCount}</span> Pending</div>
+          <div><span style="background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:6px;font-weight:700">${acceptedCount}</span> Accepted</div>
+          <div><span style="background:rgba(255,255,255,0.2);padding:4px 10px;border-radius:6px;font-weight:700">${sortedOrders.length}</span> Total</div>
+        </div>
+      `;
+      feed.appendChild(header);
+      
+      // Render each order
+      sortedOrders.forEach((o, index) => {
+        const card = document.createElement('div'); 
+        card.className='seller-card';
+        const status = o.status || 'placed';
+        const isPending = status === 'placed';
+        const isAccepted = status === 'accepted';
+        const isOutForDelivery = status === 'out_for_delivery';
+        const isDelivered = status === 'delivered';
+        
+        // Format buyer info
+        const buyerName = o.buyerName || 'Customer';
+        const buyerPhone = o.buyerPhone || 'N/A';
+        const buyerEmail = o.buyerEmail || '';
+        
+        // Status styling
+        let statusBadge = '';
+        if(isDelivered) statusBadge = `<span style="background:#4caf50;color:#fff;padding:4px 10px;border-radius:6px;font-size:0.85rem;font-weight:700">✓ DELIVERED</span>`;
+        else if(isOutForDelivery) statusBadge = `<span style="background:#2196f3;color:#fff;padding:4px 10px;border-radius:6px;font-size:0.85rem;font-weight:700">🚚 OUT FOR DELIVERY</span>`;
+        else if(isAccepted) statusBadge = `<span style="background:#4caf50;color:#fff;padding:4px 10px;border-radius:6px;font-size:0.85rem;font-weight:700">✓ ACCEPTED</span>`;
+        else statusBadge = `<span style="background:#ffc107;color:#000;padding:4px 10px;border-radius:6px;font-size:0.85rem;font-weight:700">⏳ PENDING</span>`;
+        
+        // Action buttons based on status
+        let actionButtons = '';
+        if(isPending) {
+          actionButtons = `<button class="acceptOrder" data-id="${o.id}" style="background:#2b652e;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.95rem">✓ Accept Order</button>`;
+        } else if(isAccepted) {
+          actionButtons = `<button class="dispatchOrder" data-id="${o.id}" style="background:#2196f3;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.95rem">🚚 Mark Out for Delivery</button>`;
+        } else if(isOutForDelivery) {
+          actionButtons = `<button class="deliverOrder" data-id="${o.id}" style="background:#4caf50;color:#fff;border:none;padding:10px 16px;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.95rem">✓ Mark Delivered</button>`;
+        }
+        
+        let borderColor = '#ffc107';
+        if(isDelivered) borderColor = '#4caf50';
+        else if(isOutForDelivery) borderColor = '#2196f3';
+        else if(isAccepted) borderColor = '#4caf50';
+        
+        card.style.cssText = `border-left:4px solid ${borderColor}`;
+        
+        card.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:12px">
+            <div>
+              <div style="font-size:1.1rem;font-weight:800;color:#2b652e">Order #${String(o.id).substring(0,10)}</div>
+              <div style="color:#999;font-size:0.85rem;margin-top:4px">${new Date(o.time).toLocaleString()}</div>
+            </div>
+            ${statusBadge}
+          </div>
+          
+          <div style="background:#f8f9fa;padding:12px;border-radius:8px;margin-bottom:12px">
+            <div style="font-weight:700;color:#222;margin-bottom:8px">👤 Customer Details</div>
+            <div style="color:#555;font-size:0.95rem;line-height:1.6">
+              <div><strong>Name:</strong> ${buyerName}</div>
+              <div><strong>Phone:</strong> ${buyerPhone}</div>
+              ${buyerEmail ? `<div><strong>Email:</strong> ${buyerEmail}</div>` : ''}
+            </div>
+          </div>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px">
+            <div style="background:#e3f2fd;padding:10px;border-radius:8px;text-align:center">
+              <div style="color:#1976d2;font-size:0.85rem;font-weight:600">QUANTITY</div>
+              <div style="font-size:1.3rem;font-weight:800;color:#222;margin-top:4px">${o.liters}L</div>
+            </div>
+            <div style="background:#e8f5e9;padding:10px;border-radius:8px;text-align:center">
+              <div style="color:#388e3c;font-size:0.85rem;font-weight:600">TOTAL</div>
+              <div style="font-size:1.3rem;font-weight:800;color:#2b652e;margin-top:4px">₹${o.total}</div>
+            </div>
+          </div>
+          
+          ${actionButtons ? `<div style="margin-top:12px">${actionButtons}</div>` : ''}
+        `;
+        
+        feed.appendChild(card);
+        
+        // Attach handlers for all action buttons
+        const acceptBtn = card.querySelector('.acceptOrder');
+        const dispatchBtn = card.querySelector('.dispatchOrder');
+        const deliverBtn = card.querySelector('.deliverOrder');
+        
+        if(acceptBtn){
+          acceptBtn.addEventListener('mouseenter', () => acceptBtn.style.background='#3a8540');
+          acceptBtn.addEventListener('mouseleave', () => acceptBtn.style.background='#2b652e');
+          acceptBtn.addEventListener('click', async (ev)=>{
+            ev.stopPropagation();
+            acceptBtn.disabled = true;
+            acceptBtn.textContent = 'Processing...';
+            
+            const orderId = acceptBtn.dataset.id;
+            const tok = (currentUser && currentUser.token) ? currentUser.token : null;
+            
+            if(tok){
+              try{
+                const res = await fetch(API_BASE + '/orders/' + encodeURIComponent(orderId) + '/accept', { method: 'POST', headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' }});
+                if(res.ok){
+                  await renderSellerDashboard();
+                  alert('✓ Order accepted successfully!');
+                  return;
+                } else {
+                  try{ const body = await res.json(); if(body && body.error) alert('Error: ' + body.error); }catch(e){}
+                  acceptBtn.disabled = false;
+                  acceptBtn.textContent = '✓ Accept Order';
+                }
+              }catch(e){}
+            }
+            
+            // Offline fallback
+            if(!tok || true) {
+              try{
+                const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+                const idx = orders.findIndex(x => String(x.id) === String(orderId));
+                if(idx !== -1){ 
+                  orders[idx].status = 'accepted'; 
+                  orders[idx].acceptedTime = new Date().toISOString();
+                  localStorage.setItem('orders', JSON.stringify(orders));
+                  await renderSellerDashboard();
+                  alert('✓ Order accepted (offline mode)');
+                  return; 
+                }
+                alert('Unable to accept order');
+              }catch(e){ 
+                console.error(e); 
+                alert('Unable to accept order'); 
+              }
+            }
+            acceptBtn.disabled = false;
+            acceptBtn.textContent = '✓ Accept Order';
+          });
+        }
+        
+        if(dispatchBtn){
+          dispatchBtn.addEventListener('click', async (ev)=>{
+            ev.stopPropagation();
+            dispatchBtn.disabled = true;
+            dispatchBtn.textContent = 'Processing...';
+            
+            const orderId = dispatchBtn.dataset.id;
+            const tok = (currentUser && currentUser.token) ? currentUser.token : null;
+            
+            if(tok){
+              try{
+                const res = await fetch(API_BASE + '/orders/' + encodeURIComponent(orderId) + '/dispatch', { method: 'POST', headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' }});
+                if(res.ok){
+                  await renderSellerDashboard();
+                  alert('✓ Order marked as out for delivery!');
+                  return;
+                }
+              }catch(e){}
+            }
+            
+            // Offline fallback
+            try{
+              const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+              const idx = orders.findIndex(x => String(x.id) === String(orderId));
+              if(idx !== -1){ 
+                orders[idx].status = 'out_for_delivery';
+                orders[idx].deliveryTime = new Date().toISOString();
+                localStorage.setItem('orders', JSON.stringify(orders));
+                await renderSellerDashboard();
+                alert('✓ Order marked as out for delivery!');
+                return; 
+              }
+            }catch(e){}
+            dispatchBtn.disabled = false;
+            dispatchBtn.textContent = '🚚 Mark Out for Delivery';
+          });
+        }
+        
+        if(deliverBtn){
+          deliverBtn.addEventListener('click', async (ev)=>{
+            ev.stopPropagation();
+            deliverBtn.disabled = true;
+            deliverBtn.textContent = 'Processing...';
+            
+            const orderId = deliverBtn.dataset.id;
+            const tok = (currentUser && currentUser.token) ? currentUser.token : null;
+            
+            if(tok){
+              try{
+                const res = await fetch(API_BASE + '/orders/' + encodeURIComponent(orderId) + '/deliver', { method: 'POST', headers: { 'Authorization': 'Bearer ' + tok, 'Content-Type': 'application/json' }});
+                if(res.ok){
+                  await renderSellerDashboard();
+                  alert('✓ Order marked as delivered!');
+                  return;
+                }
+              }catch(e){}
+            }
+            
+            // Offline fallback
+            try{
+              const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+              const idx = orders.findIndex(x => String(x.id) === String(orderId));
+              if(idx !== -1){ 
+                orders[idx].status = 'delivered';
+                orders[idx].deliveredTime = new Date().toISOString();
+                localStorage.setItem('orders', JSON.stringify(orders));
+                await renderSellerDashboard();
+                alert('✓ Order marked as delivered!');
+                return; 
+              }
+            }catch(e){}
+            deliverBtn.disabled = false;
+            deliverBtn.textContent = '✓ Mark Delivered';
+          });
+        }
+      });
+    }
+
+  const homeBtn = document.getElementById('homeBtn'); if(homeBtn) homeBtn.addEventListener('click', ()=> renderSellers());
+  const cowBtn = document.getElementById('cowBtn'); if(cowBtn) cowBtn.addEventListener('click', ()=> renderSellers('cow'));
+  const buffaloBtn = document.getElementById('buffaloBtn'); if(buffaloBtn) buffaloBtn.addEventListener('click', ()=> renderSellers('buffalo'));
+  // If seller logged in show seller dashboard, otherwise show public sellers list
+  if(currentUser && currentUser.role === 'seller') renderSellerDashboard(); else window.location.href='index.html';
+
+    const modalBackdrop = document.getElementById('modalBackdrop');
+    const modalBody = document.getElementById('modalBody');
+    const modalClose = document.getElementById('modalClose');
+
+    function showSellerDetails(seller) {
+      const name = (seller.fname || '') + (seller.lname ? ' ' + seller.lname : '');
+      const milkTypeText = seller.milkType ? (seller.milkType === 'cow' ? 'Cow Milk' : 'Buffalo Milk') : 'N/A';
+      const costText = seller.milkCost ? ('₹' + seller.milkCost + ' / liter') : 'N/A';
+      const phone = seller.phone || 'N/A';
+      const address = seller.address || 'N/A';
+
+      modalBody.innerHTML = `
+        <div style="display:flex;gap:12px;align-items:center">
+          <img src="${seller.photo || 'https://cdn-icons-png.flaticon.com/512/616/616408.png'}" alt="photo" style="width:84px;height:84px;border-radius:10px;object-fit:cover;background:#eee">
+          <div>
+            <div style="font-weight:800;color:#2b652e">${name}</div>
+            <div style="color:#666;margin-top:6px">${seller.email || 'N/A'}</div>
+            <div style="color:#4CAF50;font-weight:800;margin-top:6px">${milkTypeText}</div>
+          </div>
+        </div>
+
+        <div class="detail-row"><div class="detail-label">Account Type</div><div class="detail-value">${seller.role || 'seller'}</div></div>
+        <div class="detail-row"><div class="detail-label">Price / Liter</div><div class="detail-value">${costText}</div></div>
+        <div class="detail-row"><div class="detail-label">Mobile</div><div class="detail-value">${phone}</div></div>
+        <div class="detail-row"><div class="detail-label">Location</div><div class="detail-value">${address}</div></div>
+        <div class="detail-row"><div class="detail-label">Email</div><div class="detail-value">${seller.email || 'N/A'}</div></div>
+
+        <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:14px">
+          <button id="contactSellerBtn" style="background:#2b652e;color:#fff;border:none;padding:8px 12px;border-radius:8px;cursor:pointer">Contact</button>
+          <button id="closeBtn" style="background:#eee;border:none;padding:8px 12px;border-radius:8px;cursor:pointer">Close</button>
+        </div>
+      `;
+      modalBackdrop.style.display = 'flex';
+      document.getElementById('closeBtn').addEventListener('click', hideModal);
+      document.getElementById('contactSellerBtn').addEventListener('click', ()=>{
+        if (seller.email) location.href = `mailto:${seller.email}?subject=Inquiry about milk`;
+        else if (seller.phone && seller.phone !== 'N/A') location.href = `tel:${seller.phone}`;
+        else alert('No contact available.');
+      });
+    }
+
+    function hideModal(){ modalBackdrop.style.display='none'; modalBody.innerHTML=''; }
+    modalClose.addEventListener('click', hideModal);
+    modalBackdrop.addEventListener('click',(e)=>{ if(e.target === modalBackdrop) hideModal(); });
+  </script>
+</body>
+</html>

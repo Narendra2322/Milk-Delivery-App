@@ -1,0 +1,110 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Login - Shift White Gold</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <style>
+    html,body{height:100%;margin:0;font-family:Arial;background:#f7f7f7}
+    .card{max-width:420px;margin:80px auto;padding:20px;background:#fff;border-radius:10px;box-shadow:0 8px 26px rgba(0,0,0,0.06)}
+    h2{color:#2b652e;margin:0 0 12px}
+    .row{margin-bottom:10px}
+    input,button{width:100%;padding:10px;border-radius:6px;border:1px solid #ddd;box-sizing:border-box}
+    button{background:#2b652e;color:#fff;border:none;cursor:pointer}
+    .small{text-align:center;margin-top:10px;color:#666}
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h2>Login</h2>
+    <div class="row"><input id="phone" placeholder="Mobile number (+91xxxxxxxxxx)"></div>
+    <div class="row"><input id="password" type="password" placeholder="Password"></div>
+    <div class="row"><button id="loginBtn">Login</button></div>
+    <div class="small">New user? <a href="register.html">Register</a></div>
+  </div>
+
+  <script>
+    function qs(name){ const p=new URLSearchParams(location.search); return p.get(name); }
+    const redirect = qs('redirect') || 'index.html';
+    // Prefill phone from query param (e.g., after registration)
+    const prefillPhone = qs('phone');
+    if(prefillPhone){ try{ document.addEventListener('DOMContentLoaded', ()=>{ const el=document.getElementById('phone'); if(el) el.value = prefillPhone; }); }catch(e){} }
+    const API_BASE = 'http://localhost:4000/api';
+    async function apiFetch(path, opts){
+      try{ const res = await fetch(API_BASE + path, opts); if(!res.ok) throw new Error('Network error'); return await res.json(); }catch(e){ throw e; }
+    }
+
+    document.getElementById('loginBtn').addEventListener('click', async ()=>{
+      const phone = (document.getElementById('phone').value||'').trim();
+      const pass = (document.getElementById('password').value||'');
+      if(!phone||!pass){ alert('Enter phone and password'); return; }
+      // Try backend login first
+      try{
+        const result = await apiFetch('/login', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify({ phone, password: pass }) });
+        const token = result.token;
+        const user = result.user;
+        localStorage.setItem('currentUser', JSON.stringify(Object.assign({}, user, { token })));
+        // Seller accounts never need to see public seller listings; send directly to dashboard
+        if(user.role === 'seller') {
+          window.location.href = 'dashboard.html';
+          return;
+        }
+        // if there was a pendingOrder, attempt to place it via API
+        const pending = JSON.parse(localStorage.getItem('pendingOrder')||'null');
+        if(pending){
+          if(user.role !== 'client'){ alert('Please login as client to place order'); window.location.href = redirect; return; }
+          try{
+            // place order via API
+            const ordersResp = await apiFetch('/orders', { method:'POST', headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token }, body: JSON.stringify({ items: [{ sellerId: pending.sellerId, liters: pending.liters, milkCost: pending.milkCost || 0 }] }) });
+            localStorage.removeItem('pendingOrder');
+            alert('Order placed successfully');
+            window.location.href = redirect; return;
+          }catch(e){
+            // fallback to localStorage processing
+            const users = JSON.parse(localStorage.getItem('users')||'[]');
+            const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+            const seller = users.find(u=>u._id===pending.sellerId);
+            const total = (seller && seller.milkCost) ? seller.milkCost * pending.liters : 0;
+            const order = { id: Date.now(), sellerId: pending.sellerId, buyerPhone: user.phone, buyerName: user.fname+' '+(user.lname||''), liters: pending.liters, total, time: new Date().toISOString() };
+            orders.push(order);
+            localStorage.setItem('orders', JSON.stringify(orders));
+            const messages = JSON.parse(localStorage.getItem('messages')||'[]');
+            messages.push({ id: Date.now(), sellerId: pending.sellerId, text:`Order from ${order.buyerName || order.buyerPhone}: ${order.liters}L. Total ₹${order.total}`, orderId: order.id, time: order.time });
+            localStorage.setItem('messages', JSON.stringify(messages));
+            localStorage.removeItem('pendingOrder');
+            alert('Order placed successfully (offline)');
+            window.location.href = redirect; return;
+          }
+        }
+        window.location.href = redirect; return;
+      }catch(err){
+        // fallback to localStorage login
+        const users = JSON.parse(localStorage.getItem('users')||'[]');
+        const user = users.find(u=>u.phone===phone);
+        if(!user){ alert('User not found'); return; }
+        if(user.password !== pass){ alert('Incorrect password'); return; }
+        localStorage.setItem('currentUser', JSON.stringify({ phone: user.phone, role: user.role, fname: user.fname, _id: user._id }));
+        if(user.role === 'seller') { window.location.href = 'dashboard.html'; return; }
+        const pending = JSON.parse(localStorage.getItem('pendingOrder')||'null');
+        if(pending){
+          if(user.role !== 'client'){ alert('Please login as client to place order'); window.location.href = redirect; return; }
+          // process pending locally
+          const orders = JSON.parse(localStorage.getItem('orders')||'[]');
+          const seller = users.find(u=>u._id===pending.sellerId);
+          const total = (seller && seller.milkCost) ? seller.milkCost * pending.liters : 0;
+          const order = { id: Date.now(), sellerId: pending.sellerId, buyerPhone: user.phone, buyerName: user.fname+' '+(user.lname||''), liters: pending.liters, total, time: new Date().toISOString() };
+          orders.push(order);
+          localStorage.setItem('orders', JSON.stringify(orders));
+          const messages = JSON.parse(localStorage.getItem('messages')||'[]');
+          messages.push({ id: Date.now(), sellerId: pending.sellerId, text:`Order from ${order.buyerName || order.buyerPhone}: ${order.liters}L. Total ₹${order.total}`, orderId: order.id, time: order.time });
+          localStorage.setItem('messages', JSON.stringify(messages));
+          localStorage.removeItem('pendingOrder');
+          alert('Order placed successfully');
+          window.location.href = redirect; return;
+        }
+        window.location.href = redirect; return;
+      }
+    });
+  </script>
+</body>
+</html>
