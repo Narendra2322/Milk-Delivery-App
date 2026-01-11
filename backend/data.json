@@ -1,6 +1,89 @@
-﻿{
-  "users": [],
+{
+  "users": [
+    {
+      "_id": "u1767897453445497",
+      "role": "seller",
+      "fname": "asdfgh",
+      "lname": "asdfgh",
+      "phone": "9874563210",
+      "email": "b@gmail.com",
+      "password": "$2a$10$dbL5StUeSx57vrAKuSznMuAZUBgL/VcV.RlKE5kRLSN/IYkVTZj.i",
+      "milkType": "buffalo",
+      "milkCost": 49.98,
+      "address": "qwertyu"
+    },
+    {
+      "_id": "u1767897566207863",
+      "role": "client",
+      "fname": "lkjhg",
+      "lname": "lkjh",
+      "phone": "0123456789",
+      "email": "a@gmail.com",
+      "password": "$2a$10$NKuwWROUEEMbCGEhB.UQwePr/yNZyUFaIk5e0T/pDSDRdyZ2dbqAS"
+    },
+    {
+      "_id": "u1768100442023980",
+      "role": "client",
+      "fname": "narendra",
+      "lname": "hii",
+      "phone": "9999999999",
+      "email": "nare@gmail.com",
+      "password": "$2a$10$9FsUvydqflXZoK95hE9JH.tVzlpqcNUWUMa2ZvMflTJWgvkA7jsjK"
+    },
+    {
+      "_id": "u1768100604462577",
+      "role": "client",
+      "fname": "nare",
+      "lname": "ndra",
+      "phone": "8888888888",
+      "email": "narendr@gmail.com",
+      "password": "$2a$10$5I/snBxMjfmNqwTcIW89pu9ghVV/DHtctweNA7H80y07jHMQbAcNO"
+    },
+    {
+      "_id": "u1768100701950345",
+      "role": "seller",
+      "fname": "na",
+      "lname": "re",
+      "phone": "7777777777",
+      "email": "narend@gmail.com",
+      "password": "$2a$10$X.pqT5TvH9C8A5H5Ma/8FuG7QaHIAGLbHqIn8tlhx903YT2EI8cXS",
+      "milkType": "cow",
+      "milkCost": 90,
+      "address": "kandhipadu"
+    }
+  ],
   "carts": [],
-  "orders": [],
-  "messages": []
+  "orders": [
+    {
+      "id": "o17678976854984",
+      "sellerId": "u1767897453445497",
+      "buyerId": "u1767897566207863",
+      "buyerName": "lkjhg lkjh",
+      "buyerPhone": "0123456789",
+      "buyerEmail": "a@gmail.com",
+      "liters": 1,
+      "total": 49.98,
+      "time": "2026-01-08T18:41:25.498Z",
+      "status": "delivered",
+      "acceptedTime": "2026-01-08T18:42:33.508Z",
+      "deliveryTime": "2026-01-08T18:42:40.381Z",
+      "deliveredTime": "2026-01-08T18:42:59.943Z"
+    }
+  ],
+  "messages": [
+    {
+      "id": "m1767897685498250",
+      "sellerId": "u1767897453445497",
+      "text": "New order from lkjhg lkjh: 1L. Total ₹49.98",
+      "orderId": "o17678976854984",
+      "time": "2026-01-08T18:41:25.498Z"
+    },
+    {
+      "id": "m1767897753508807",
+      "sellerId": "u1767897453445497",
+      "text": "Order o17678976854984 accepted by seller",
+      "orderId": "o17678976854984",
+      "time": "2026-01-08T18:42:33.508Z"
+    }
+  ]
 }

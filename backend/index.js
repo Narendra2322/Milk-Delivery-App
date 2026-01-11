@@ -19,7 +19,11 @@ function genId(prefix='id'){ return prefix + Date.now() + Math.floor(Math.random
 const app = express();
 app.use(cors());
 app.use(express.json());
-// Serve the frontend (project root) so http://localhost:4000 shows index.html
+// Serve the welcome page first so visitors learn about the app before browsing
+app.get('/', (req, res) => {
+  res.sendFile(path.resolve(__dirname, '..', 'welcome.html'));
+});
+// Serve the rest of the frontend (project root)
 app.use(express.static(path.resolve(__dirname, '..')));
 
 function canAccessOrder(order, user){
