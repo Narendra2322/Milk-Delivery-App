@@ -136,12 +136,10 @@
       // Try backend register first
       try{
         const result = await apiFetch('/register', { method:'POST', headers:{ 'Content-Type':'application/json' }, body: JSON.stringify(payload) });
-        // success -> store user in local users list but DO NOT auto-login
-        const token = result.token;
         const user = result.user;
-        // sync local users list (keep a copy locally)
+        // sync local copy for offline flows
         const local = getUsers(); local.push(user); saveUsers(local);
-        // redirect to login so user must explicitly authenticate
+        // require explicit login with phone/password
         const redirectUrl = 'login.html' + (user && user.phone ? ('?phone=' + encodeURIComponent(user.phone)) : '');
         window.location.href = redirectUrl;
         return;
@@ -150,7 +148,7 @@
         const user = Object.assign({ _id: uid() }, payload);
         users.push(user);
         saveUsers(users);
-        // do not auto-login on fallback either; redirect to login page and prefill phone
+        // require explicit login with phone/password
         const redirectUrl = 'login.html' + (user && user.phone ? ('?phone=' + encodeURIComponent(user.phone)) : '');
         window.location.href = redirectUrl;
         return;
