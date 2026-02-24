@@ -50,6 +50,28 @@
       "milkType": "cow",
       "milkCost": 90,
       "address": "kandhipadu"
+    },
+    {
+      "_id": "u1769784602593887",
+      "role": "seller",
+      "fname": "Flow",
+      "lname": "Seller",
+      "phone": "9784602424",
+      "email": "flow_seller_1769784602424@example.com",
+      "password": "$2a$10$o5/QlY3AfJbeqLfN51xadud5Mx89OhG4zXYDwMJ/pxHW4ZMdP0/ZO",
+      "milkType": "cow",
+      "milkCost": 55,
+      "address": "Flow Farm",
+      "photo": null
+    },
+    {
+      "_id": "u1769784602683960",
+      "role": "client",
+      "fname": "Flow",
+      "lname": "Buyer",
+      "phone": "8784602424",
+      "email": "flow_client_1769784602424@example.com",
+      "password": "$2a$10$/7uUB3kwNjondUn8Hs.P/.2zAkNCNFyhvlMLkir5pnJXWw5k2W5vy"
     }
   ],
   "carts": [],
@@ -98,6 +120,24 @@
       "acceptedTime": "2026-01-11T08:49:12.642Z",
       "deliveryTime": "2026-01-11T08:50:41.659Z",
       "deliveredTime": "2026-01-11T08:51:02.605Z"
+    },
+    {
+      "id": "o1769784602769743",
+      "sellerId": "u1769784602593887",
+      "buyerId": "u1769784602683960",
+      "buyerName": "Flow Buyer",
+      "buyerPhone": "8784602424",
+      "buyerEmail": "flow_client_1769784602424@example.com",
+      "liters": 3,
+      "total": 165,
+      "time": "2026-01-30T14:50:02.769Z",
+      "status": "placed",
+      "acceptedTime": null,
+      "deliveryTime": null,
+      "deliveredTime": null,
+      "deliveryLat": null,
+      "deliveryLng": null,
+      "deliveryUpdatedAt": null
     }
   ],
   "messages": [
@@ -142,6 +182,13 @@
       "text": "Order o176812122084840 accepted by seller",
       "orderId": "o176812122084840",
       "time": "2026-01-11T08:49:12.642Z"
+    },
+    {
+      "id": "m1769784602769251",
+      "sellerId": "u1769784602593887",
+      "text": "New order from Flow Buyer: 3L. Total ₹165",
+      "orderId": "o1769784602769743",
+      "time": "2026-01-30T14:50:02.769Z"
     }
   ]
 }

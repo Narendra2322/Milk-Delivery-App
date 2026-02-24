@@ -1,0 +1,22 @@
+{
+  "name": "shift-white-gold",
+  "version": "1.0.0",
+  "description": "A web application for connecting milk sellers with customers.",
+  "main": "index.html",
+  "scripts": {
+    "start": "live-server . --ignore=backend/** --open=welcome.html",
+    "test": "echo 'No tests defined yet'"
+  },
+  "keywords": [
+    "milk",
+    "sellers",
+    "orders",
+    "marketplace",
+    "ecommerce"
+  ],
+  "author": "Shift White Gold Team",
+  "license": "MIT",
+  "dependencies": {
+    "live-server": "^1.2.1"
+  }
+}

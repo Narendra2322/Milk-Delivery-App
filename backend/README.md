@@ -8,7 +8,7 @@ Features:
 - Sellers listing
 - Cart persistence per user
 - Place orders and generate seller messages
-- Data persisted in `data.json` (simple file-based DB)
+- Data persisted in MongoDB (Atlas/local)
 
 Getting started
 1. Open a terminal in `backend/`.
@@ -25,6 +25,12 @@ npm start
 ```
 
 The server runs by default on port 4000. You can set `PORT` and `JWT_SECRET` environment variables if desired.
+
+Environment
+- Create `backend/.env` with:
+  - `MONGO_URI` (MongoDB connection string)
+  - `JWT_SECRET`
+  - `PORT` (optional)
 
 Notes
 - This backend is intentionally small and suitable for local development/testing only. For production use, switch to a real database and hardened auth.

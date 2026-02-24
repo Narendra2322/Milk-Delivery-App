@@ -1,29 +1,34 @@
-const mysql = require('mysql2/promise');
+const { MongoClient } = require("mongodb");
 
-// Database configuration
-const dbConfig = {
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'shift_white_gold',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-};
+const MONGO_URI = process.env.MONGO_URI;
+const DB_NAME = "milk_app";
 
-// Create connection pool
-const pool = mysql.createPool(dbConfig);
+let client;
+let db;
 
-// Test connection
-async function testConnection() {
-  try {
-    const connection = await pool.getConnection();
-    console.log('✓ MySQL database connected successfully');
-    connection.release();
-  } catch (error) {
-    console.error('✗ MySQL connection failed:', error.message);
-    process.exit(1);
+async function connectDb() {
+  if (db) return db;
+
+  if (!MONGO_URI) {
+    throw new Error("Missing MONGO_URI in backend/.env");
   }
+
+  client = new MongoClient(MONGO_URI, { serverSelectionTimeoutMS: 8000 });
+  await client.connect();
+  db = client.db(DB_NAME);
+
+  console.log("MongoDB Atlas connected ✅");
+  return db;
 }
 
-module.exports = { pool, testConnection };
+async function collections() {
+  const db = await connectDb();
+  return {
+    users: db.collection("users"),
+    carts: db.collection("carts"),
+    orders: db.collection("orders"),
+    messages: db.collection("messages"),
+  };
+}
+
+module.exports = { connectDb, collections };

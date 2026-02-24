@@ -38,7 +38,7 @@
 
     log('Place order 3L for new seller');
     const orderResp = await post('/orders', { items:[{ sellerId, liters:3, milkCost:55 }] }, clientToken);
-    const orderId = orderResp.orders[0].id;
+    const orderId = orderResp.orders[0].id || orderResp.orders[0]._id;
 
     log('Seller login');
     const sellerLogin = await post('/login', { phone: sellerPhone, password });
